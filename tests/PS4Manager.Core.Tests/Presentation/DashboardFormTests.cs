@@ -30,7 +30,7 @@ namespace PS4Manager.Core.Tests.Presentation
         [InlineData("prx", "PRX Manager")]
         [InlineData("backup", "Backup Timeline")]
         [InlineData("packages", "PKG Manager")]
-        [InlineData("luma", "Luma Script Manager")]
+        [InlineData("luma", "Luma Studio — PS4")]
         [InlineData("mods", "Mod Library")]
         [InlineData("games", "Games")]
         public void New_manager_tools_open_real_windows_instead_of_placeholders(string key, string windowTitle)
@@ -157,7 +157,7 @@ namespace PS4Manager.Core.Tests.Presentation
                             b.Text == "PRX Manager" ||
                             b.Text == "Backup Timeline" ||
                             b.Text == "PKG Manager" ||
-                            b.Text == "Luma Script Manager");
+                            b.Text == "Luma Studio");
         }
 
         private static RibbonItem FindRibbonItem(DashboardForm form, string text)
@@ -186,7 +186,7 @@ namespace PS4Manager.Core.Tests.Presentation
                 "PRX Manager",
                 "Backup Timeline",
                 "PKG Manager",
-                "Luma Script Manager",
+                "Luma Studio",
                 "Mod Library", "Games"
             };
         }

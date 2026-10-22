@@ -7,6 +7,8 @@
     <ApplicationIcon>..\..\assets\icon_file_manager.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Scintilla5.NET" Version="7.0.0" />
+    <Content Include="..\..\THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\assets\icon_file_manager.ico" Link="icon_file_manager.ico" />
   </ItemGroup>
   <ItemGroup>

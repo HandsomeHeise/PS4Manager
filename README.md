@@ -5,7 +5,7 @@ jailbroken PS4 über den FTP-Server von **GoldHEN** besitzt und Werkzeuge als
 eigene Fenster öffnet — den **File Manager** (Dateien wie im Windows Explorer),
 **Screenshots & Videos** (Galerie mit Vorschau und Player), den
 **GoldHEN Manager**, **PS4 Health**, den **Frame4 Debugger**, den
-**PRX Manager**, den **Luma Script Manager**, die **Backup Timeline** und den
+**PRX Manager**, **Luma Studio**, die **Backup Timeline** und den
 **PKG Manager**, die **Mod Library** und **Games**. Die Oberfläche verwendet
 DevExpress WinForms 25.2 mit einem PS4-Dashboard, Ribbon und Hell-/Dunkel-Theme. Alle
 FTP-Werkzeuge teilen sich **eine** FTP-Verbindung, **eine** Warteschlange und
@@ -99,7 +99,7 @@ Installationsbelege, Wiederaufnahme, Rollback und Deinstallation auf der PS4.
 - **PRX Manager:** Fokussiertes Fenster zum Auflisten von Prozessen und PRX-
   Modulen sowie zum Laden und Entladen einer PRX über Frame4.
 
-### Luma Script Manager
+### Luma Studio
 
 - **Live-Lua:** Verbindet sich mit Lumas Control-Channel und führt Lua im
   laufenden Spiel aus. GTA V nutzt standardmäßig Port `9615`, Red Dead
@@ -107,8 +107,14 @@ Installationsbelege, Wiederaufnahme, Rollback und Deinstallation auf der PS4.
 - **Profile:** Die Spielauswahl setzt den passenden Port; Host und optionaler
   Token werden gespeichert. Der Host ist dieselbe PS4-Adresse wie im
   Dashboard.
-- **Befehle:** Das Fenster unterstützt Connect/Disconnect, Token-Handshake,
-  Script-Reload, Lua-Ausführung, Resource-Liste und eingehende Log-Zeilen.
+- **Editor:** Lua-Highlighting, Zeilennummern, Folding, Tabs, lokaler Projektbaum,
+  Speichern mit Konfliktschutz, Suchen und spielbezogene API-Vervollständigung.
+- **Prüfen:** Der echte Lua-5.4.7-Compiler prüft ausschließlich die Syntax auf
+  dem PC. Er führt dabei keinen Code aus. Fehler lassen sich doppelklicken.
+- **Getrennte Aktionen:** Check prüft lokal, Execute führt den aktuellen Puffer
+  einmal aus, Upload kopiert nach ausdrücklicher Bestätigung und Reload lädt
+  erst auf eigenen Klick die Skripte neu. Logs erscheinen im Console-Tab.
+- **Details und Tastenkürzel:** [docs/luma-studio.md](docs/luma-studio.md).
 - **Hinweis:** Luma bedient nur einen Control-Client gleichzeitig. Wenn VSCode
   noch verbunden ist, zuerst dort trennen.
 

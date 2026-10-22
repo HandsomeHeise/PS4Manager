@@ -58,7 +58,7 @@ namespace PS4Manager.App
             for (int i = 0; i < 3; i++) shortcuts.RowStyles.Add(new RowStyle(SizeType.Percent, 33.333f));
             shortcuts.Controls.Add(Shortcut("Mod library", "Browse compatible releases and manage installations", ModsKey), 0, 0);
             shortcuts.Controls.Add(Shortcut("GoldHEN plugins", "Manage plugins, configuration and backups", GoldHenKey), 0, 1);
-            shortcuts.Controls.Add(Shortcut("Luma scripts", "Connect to Luma and reload Lua scripts", LumaKey), 0, 2);
+            shortcuts.Controls.Add(Shortcut("Luma Studio", "Write, check and deploy Lua scripts", LumaKey), 0, 2);
             library.Controls.Add(shortcuts); sections.Controls.Add(library, 2, 0);
             layout.Controls.Add(sections, 0, 2);
             scroll.Controls.Add(layout);

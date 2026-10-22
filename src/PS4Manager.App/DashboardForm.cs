@@ -55,7 +55,7 @@ namespace PS4Manager.App
             new ToolDefinition(PrxKey, "PRX Manager", false),
             new ToolDefinition(BackupKey, "Backup Timeline", false),
             new ToolDefinition(PackageKey, "PKG Manager", false),
-            new ToolDefinition(LumaKey, "Luma Script Manager", false),
+            new ToolDefinition(LumaKey, "Luma Studio", false),
             new ToolDefinition(ModsKey, "Mod Library", false),
             new ToolDefinition(GamesKey, "Games", false)
         };
@@ -486,9 +486,9 @@ namespace PS4Manager.App
                 case PackageKey:
                     return new PackageManagerForm(_sessions);
                 case LumaKey:
-                    return new LumaManagerForm(_settings, SaveSettings);
+                    return new LumaStudioForm(_settings, SaveSettings);
                 case ModsKey:
-                    return new ModLibraryForm(_sessions,_settings,SaveSettings,()=>OpenTool(GoldHenKey),ShowTransfers,()=>_tools.OpenForms.Any(f=>f is LumaManagerForm),_notificationCoordinator);
+                    return new ModLibraryForm(_sessions,_settings,SaveSettings,()=>OpenTool(GoldHenKey),ShowTransfers,()=>_tools.OpenForms.Any(f=>f is LumaStudioForm),_notificationCoordinator);
                 case GamesKey:
                     return new GamesForm(_sessions, _settings, _notifications, _trainerTransport);
                 case UpdatesKey:
@@ -574,6 +574,7 @@ namespace PS4Manager.App
             }
 
             if (!e.Cancel && _tools.OpenForms.OfType<GamesForm>().Any(g => !g.ApproveClosing())) e.Cancel = true;
+            if (!e.Cancel && _tools.OpenForms.OfType<LumaStudioForm>().Any(s => !s.ApproveClosing())) e.Cancel = true;
             if (!e.Cancel && !ConfirmLeave("Exit"))
             {
                 e.Cancel = true;
@@ -582,6 +583,7 @@ namespace PS4Manager.App
             if (!e.Cancel)
             {
                 foreach (var games in _tools.OpenForms.OfType<GamesForm>()) games.CommitCloseApproval();
+                foreach (var studio in _tools.OpenForms.OfType<LumaStudioForm>()) studio.CommitCloseApproval();
                 // FormClosing ist synchron: erst asynchron aufräumen (Aufträge
                 // abbrechen, Werkzeugfenster schließen), dann erneut schließen.
                 e.Cancel = true;

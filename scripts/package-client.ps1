@@ -10,7 +10,9 @@ $build = [IO.Path]::GetFullPath($BuildDirectory)
 # Explicit runtime allowlist prevents test DLLs, user settings and credentials from leaking into a release.
 $names = @(Get-Content -LiteralPath (Join-Path $PSScriptRoot 'client-runtime.json') -Raw | ConvertFrom-Json)
 if ($names.Count -eq 0 -or ($names | Select-Object -Unique).Count -ne $names.Count) { throw 'Invalid runtime manifest.' }
-foreach ($name in $names) { if ([IO.Path]::GetFileName($name) -ne $name -or $name -match '^(UIFramework|.*Tests\.)') { throw 'Invalid runtime manifest entry.' } }
+foreach ($name in $names) {
+    if ($name -notmatch '\A(?:(?!\.\.?$)[A-Za-z0-9_.-]+|runtimes/win-(?:x86|x64)/native/(?:Lexilla|Scintilla)\.dll)\z' -or $name -match '^(UIFramework|.*Tests\.)') { throw 'Invalid runtime manifest entry.' }
+}
 foreach ($name in $names) {
     if (-not [IO.File]::Exists((Join-Path $build $name))) { throw "Missing runtime file: $name" }
 }

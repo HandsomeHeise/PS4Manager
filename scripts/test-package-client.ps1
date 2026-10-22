@@ -9,7 +9,11 @@ function Expect-Failure([scriptblock]$Action, [string]$Pattern) {
     catch { if ($_.Exception.Message -notmatch $Pattern) { throw } }
 }
 Expect-Failure { & $packageScript -OutputPath (Join-Path $FixtureRoot 'missing.zip') -BuildDirectory $build } 'Missing runtime file'
-foreach($name in $names) { [IO.File]::WriteAllText((Join-Path $build $name),('Fixture content for ' + $name)) }
+foreach($name in $names) {
+    $fixtureFile = Join-Path $build $name
+    [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($fixtureFile)) | Out-Null
+    [IO.File]::WriteAllText($fixtureFile,('Fixture content for ' + $name))
+}
 [IO.File]::WriteAllText((Join-Path $build 'credentials.json'),'do not package')
 [IO.File]::WriteAllText((Join-Path $build 'Private.Tests.dll'),'do not package')
 $output = Join-Path $FixtureRoot 'verified.zip'

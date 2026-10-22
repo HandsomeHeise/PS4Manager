@@ -153,6 +153,10 @@ try {
     "-out",
     "/secrets/mod_private_key.pem"
   ]);
+  const signingPublicKey = await docker([
+    "run", "--rm", "--entrypoint", "openssl", "-v", `${secrets}:/secrets`,
+    "ps4manager-mods-backup", "pkey", "-in", "/secrets/mod_private_key.pem", "-pubout"
+  ]);
   await docker([
     "run",
     "--rm",
@@ -337,7 +341,7 @@ try {
       "RSA-SHA256",
       payload,
       {
-        key: createPublicKey(await readFile(join(secrets, "mod_private_key.pem"))),
+        key: createPublicKey(signingPublicKey.stdout),
         padding: constants.RSA_PKCS1_PADDING
       },
       Buffer.from(detail.signature, "base64")

@@ -1,0 +1,9 @@
+x-journal: &journal
+  driver: journald
+  options:
+    tag: ps4manager
+services:
+  api: { logging: *journal }
+  mysql: { logging: *journal }
+  nginx: { logging: *journal }
+  backup: { logging: *journal }

@@ -1,0 +1,8 @@
+{
+  "version": "9.8.7",
+  "channel": "stable",
+  "url": "https://mods.example.test/api/v1/updates/packages/79b85733c09243630fd8bf2b5d4fdef6b140e13896c54d21d64a6a1d98cf63df.zip",
+  "sha256": "79b85733c09243630fd8bf2b5d4fdef6b140e13896c54d21d64a6a1d98cf63df",
+  "notes": "Fixture ä\nSecond line",
+  "signature": "OcPs73xgZU/QTukPWrPWiuw7OFGsqi2aNY/KXE4flpLwjBpYMqBCrX9Ke0/lkOaQZgw+BqJg7PQsX2T+d3hb3VD6zk8qYUTHFBMk9emGuO4wyXz1GBXpbVA/Kp3nnfT5VrvPEP8bXbuBfktHs3Oa8IAuD1if7jgx226X7ysborPqD0J4xutA49BOPe4zdkFtVAHAhnXjE4xhvBh2jrWrUSrTEGo+ZWgG3+tqOe2tAZ9F8gY47/wr3HlPHqJA3E7LJnaOt34JaThHunw6q9B+A5T1zGNMC60TdEWLMiT9T35SFKLyeV69aH+iXy++ooSAllzaEpneZ7FseDRGtTwWBQ=="
+}

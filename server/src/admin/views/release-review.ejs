@@ -1,0 +1,11 @@
+<%- include('layout') %>
+<p><%= release.title %> · Version <%= release.version %> · <%= manifest.packageType %></p>
+<p>Autor: <%= release.author %> · Kategorie: <%= release.category %></p><p><%= release.summary %></p><p><%= release.description %></p>
+<% if (manifest.packageType === 'luma-script') { %><p>Luma-Profil: <%= manifest.lumaProfile %></p><% } %>
+<section class="notice"><h2>Nach der Freigabe unveränderlich</h2><p>Prüfe jede Zieldatei und Spielversion. Das Paket wird signiert und im öffentlichen Katalog angeboten.</p></section>
+<h2>Kompatible Spiele</h2><ul><% for (const pair of release.compatibility) { %><li><%= pair.titleId %> — Version <%= pair.gameVersion %></li><% } %></ul>
+<h2>Alle Dateioperationen (<%= manifest.operations.length %>)</h2><div class="table-scroll"><table><thead><tr><th>Quelldatei im Paket</th><th>Zieldatei auf der PS4</th></tr></thead><tbody>
+<% for (const operation of manifest.operations) { %><tr><td><code><%= operation.source %></code></td><td><code><%= operation.target %></code></td></tr><% } %>
+</tbody></table></div><p><%= release.changelog %></p>
+<form action="/api/admin/releases/<%= release.id %>/publish" data-redirect="/admin/releases/<%= release.id %>"><label class="check"><input type="checkbox" required> Ich habe Zielpfade und Kompatibilität geprüft.</label><button>Signieren und veröffentlichen</button> <a href="/admin/releases/<%= release.id %>">Zurück zum Entwurf</a></form>
+<%- include('footer') %>

@@ -1,0 +1,131 @@
+name: ps4manager-mods
+x-logging: &logging
+  driver: local
+  options:
+    max-size: "10m"
+    max-file: "5"
+x-db-environment: &db
+  MYSQL_HOST: mysql
+  MYSQL_PORT: "3306"
+  MYSQL_DATABASE: ps4manager
+  MYSQL_USER: ps4manager
+  MYSQL_PASSWORD_FILE: /run/secrets/mysql_password
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      <<: *db
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+    secrets: [mysql_password, mysql_root_password]
+    volumes: [mysql_data:/var/lib/mysql]
+    networks: [backend]
+    restart: unless-stopped
+    logging: *logging
+    healthcheck:
+      test: [CMD-SHELL, "mysqladmin ping --silent -h 127.0.0.1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  api:
+    build: .
+    environment:
+      <<: *db
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "3100"
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://mods.example.test}
+      STORAGE_ROOT: /var/lib/ps4manager
+      SESSION_SECRET_FILE: /run/secrets/session_secret
+      TOTP_ENCRYPTION_KEY_FILE: /run/secrets/totp_key
+      MOD_PRIVATE_KEY_FILE: /run/secrets/mod_private_key
+      UPDATE_PUBLIC_KEY_FILE: /run/secrets/update_public_key
+    secrets: [mysql_password, session_secret, totp_key, mod_private_key, update_public_key]
+    volumes: [artifact_data:/var/lib/ps4manager]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    networks: [backend]
+    depends_on:
+      mysql: { condition: service_healthy }
+    restart: unless-stopped
+    logging: *logging
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:3100/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  nginx:
+    image: nginx:1.28-alpine
+    environment:
+      SERVER_NAME: ${SERVER_NAME:-mods.example.test}
+    ports: ["127.0.0.1:8080:80", "443:443"]
+    volumes:
+      - ./nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ${TLS_DIRECTORY:-./tls}:/etc/nginx/tls:ro
+      - ${ACME_DIRECTORY:-./acme}:/var/www/acme:ro
+      - artifact_data:/var/lib/ps4manager:ro
+    read_only: true
+    tmpfs: [/etc/nginx/conf.d, /var/cache/nginx, /var/run]
+    networks: [backend, outbound]
+    depends_on:
+      api: { condition: service_healthy }
+    restart: unless-stopped
+    logging: *logging
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1/health/live]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+  backup:
+    build:
+      context: .
+      dockerfile: backup/Dockerfile
+    environment:
+      <<: *db
+      STORAGE_ROOT: /var/lib/ps4manager
+      BACKUP_ROOT: /backups
+      BACKUP_RETENTION_DAYS: "14"
+      RCLONE_CONFIG: /run/secrets/rclone_config
+      RCLONE_REMOTE: ${RCLONE_REMOTE:-offsite:ps4manager}
+    secrets: [mysql_password, rclone_config]
+    volumes:
+      - artifact_data:/var/lib/ps4manager:ro
+      - backup_data:/backups
+    networks: [backend, outbound]
+    depends_on:
+      api: { condition: service_healthy }
+    restart: unless-stopped
+    logging: *logging
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "const fs=require('fs');process.exit(Date.now()-fs.statSync('/backups/latest.ok').mtimeMs<129600000?0:1)"
+        ]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+networks:
+  backend: { internal: true }
+  outbound: {}
+volumes:
+  mysql_data: {}
+  artifact_data: {}
+  backup_data: {}
+secrets:
+  mysql_password: { file: "${SECRETS_DIRECTORY:-./secrets}/mysql_password" }
+  mysql_root_password: { file: "${SECRETS_DIRECTORY:-./secrets}/mysql_root_password" }
+  session_secret: { file: "${SECRETS_DIRECTORY:-./secrets}/session_secret" }
+  totp_key: { file: "${SECRETS_DIRECTORY:-./secrets}/totp_key" }
+  mod_private_key: { file: "${SECRETS_DIRECTORY:-./secrets}/mod_private_key.pem" }
+  update_public_key: { file: "${SECRETS_DIRECTORY:-./secrets}/update_public_key.pem" }
+  rclone_config: { file: "${SECRETS_DIRECTORY:-./secrets}/rclone.conf" }

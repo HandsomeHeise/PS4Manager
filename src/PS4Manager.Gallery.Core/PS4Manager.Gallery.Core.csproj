@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Ps4.Core\Ps4.Core.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <UseWindowsForms>false</UseWindowsForms>
+  </PropertyGroup>
+</Project>

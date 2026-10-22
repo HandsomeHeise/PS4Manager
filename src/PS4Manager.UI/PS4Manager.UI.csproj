@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>PS4Manager.UI</AssemblyName>
+  </PropertyGroup>
+</Project>

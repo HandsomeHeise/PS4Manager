@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <AssemblyName>PS4Manager.Gallery</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ps4.Core\Ps4.Core.csproj" />
+    <ProjectReference Include="..\FileManager.Core\FileManager.Core.csproj" />
+    <ProjectReference Include="..\PS4Manager.Core\PS4Manager.Core.csproj" />
+    <ProjectReference Include="..\PS4Manager.Gallery.Core\PS4Manager.Gallery.Core.csproj" />
+  </ItemGroup>
+  <!-- Der eingebaute Player: WPF-MediaElement in einem ElementHost. Alles
+       Teil des .NET Framework 4.8 — kein NuGet, kein COM-Interop. System.Xaml
+       ist nötig, weil PresentationFramework darüber typisiert. -->
+  <ItemGroup>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="WindowsFormsIntegration" />
+    <Reference Include="System.Xaml" />
+  </ItemGroup>
+  <ItemGroup><ProjectReference Include="..\PS4Manager.UI\PS4Manager.UI.csproj" /></ItemGroup>
+</Project>

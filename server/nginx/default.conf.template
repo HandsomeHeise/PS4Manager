@@ -1,0 +1,38 @@
+log_format private '$time_iso8601 $request_method $uri $status $body_bytes_sent';
+access_log /dev/stdout private;
+error_log /dev/null crit;
+server {
+  listen 80;
+  server_name ${SERVER_NAME};
+  location /.well-known/acme-challenge/ { root /var/www/acme; }
+  location = /health/live { proxy_pass http://api:3100; }
+  location = /health/ready { proxy_pass http://api:3100; }
+  location / { return 308 https://${SERVER_NAME}$uri; }
+}
+server {
+  listen 443 ssl;
+  server_name ${SERVER_NAME};
+  ssl_certificate /etc/nginx/tls/fullchain.pem;
+  ssl_certificate_key /etc/nginx/tls/privkey.pem;
+  ssl_protocols TLSv1.2 TLSv1.3;
+  client_max_body_size 2050m;
+  client_body_timeout 120s;
+  proxy_read_timeout 600s;
+  add_header Strict-Transport-Security "max-age=31536000" always;
+  location /_artifacts/ {
+    internal;
+    alias /var/lib/ps4manager/;
+    add_header Cache-Control "public, max-age=31536000, immutable";
+    add_header X-Content-Type-Options nosniff;
+  }
+  location ~ ^/(api|admin)/ {
+    proxy_pass http://api:3100;
+    proxy_request_buffering off;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_set_header X-Forwarded-For $remote_addr;
+  }
+  location = /health/live { proxy_pass http://api:3100; }
+  location = /health/ready { proxy_pass http://api:3100; }
+  location / { return 404; }
+}

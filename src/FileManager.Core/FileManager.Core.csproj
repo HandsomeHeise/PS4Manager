@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <UseWindowsForms>false</UseWindowsForms>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ps4.Core\Ps4.Core.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,6 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="csrf-token" content="<%= typeof csrf === 'string' ? csrf : '' %>">
+<title><%= title %> · PS4 Manager</title><link rel="stylesheet" href="/admin/admin.css"><script src="/admin/admin.js" defer></script></head>
+<body><header><a href="/admin/mods">PS4 Manager <span>Bibliothek verwalten</span></a><nav aria-label="Verwaltung"><a href="/admin/mods">Mods</a><a href="/admin/updates">Updates</a><a href="/admin/login">Anmelden</a></nav></header>
+<main><h1><%= title %></h1><p id="status" role="status" aria-live="polite"></p>

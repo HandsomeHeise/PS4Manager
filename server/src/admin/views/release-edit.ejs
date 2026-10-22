@@ -1,0 +1,13 @@
+<%- include('layout') %>
+<p><a href="/admin/mods/<%= release.mod_id %>"><%= release.title %></a> · <%= release.version %> · <span class="state"><%= release.state %></span></p>
+<% if (release.state === 'draft') { %>
+<form action="/api/admin/releases/<%= release.id %>" data-method="PUT"><label>Version<input name="version" value="<%= release.version %>" required></label>
+<label>Pakettyp<select name="packageType"><option value="files" <%= release.package_type === 'files' ? 'selected' : '' %>>Dateien</option><option value="luma-script" <%= release.package_type === 'luma-script' ? 'selected' : '' %>>Luma-Skript</option></select></label>
+<label>Änderungen<textarea name="changelog" required><%= release.changelog %></textarea></label><label>Exakte Kompatibilität (JSON)<textarea name="compatibility" class="code" required><%= JSON.stringify(release.compatibility,null,2) %></textarea></label><button>Release speichern</button></form>
+<h2>Paket</h2><p>ZIP-Datei mit manifest.json und payload-Verzeichnis. Der Upload bleibt privat.</p>
+<form action="/api/admin/releases/<%= release.id %>/package" data-upload><label>ZIP-Paket<input name="file" type="file" accept=".zip" required></label><button>Paket hochladen</button></form>
+<% if (release.staged_path) { %><p><a class="button" href="/admin/releases/<%= release.id %>/review">Paket prüfen und freigeben</a></p><% } %>
+<% } else { %><p>Veröffentlichte Paketdaten sind unveränderlich. Für Änderungen lege einen neuen Release an.</p>
+<% if (release.state === 'published') { %><form action="/api/admin/releases/<%= release.id %>/withdraw"><label>Grund für das Zurückziehen<textarea name="reason" maxlength="4000" required></textarea></label><button class="danger">Release zurückziehen</button></form>
+<% } else { %><form action="/api/admin/releases/<%= release.id %>/restore"><p>Die vorhandene Datei und ihre Signatur werden vor der Wiederherstellung geprüft.</p><button>Release wiederherstellen</button></form><% } %><% } %>
+<%- include('footer') %>

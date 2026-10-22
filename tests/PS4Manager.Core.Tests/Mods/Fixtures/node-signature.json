@@ -1,0 +1,21 @@
+{
+  "input": {
+    "releaseId": "aa6b9003-f0e2-4ee9-a8b5-f48cf3da73c2",
+    "modId": "f8615e4a-cb7e-4cf7-8326-5464475f080e",
+    "version": "1.0.0",
+    "packageType": "files",
+    "size": 22,
+    "sha256": "1df802b4a11426eab0fab3eed3289ac86660ad4630c12b4786087fa7c9c23680",
+    "compatibility": [
+      {
+        "titleId": "CUSA00411",
+        "gameVersion": "1.57"
+      }
+    ]
+  },
+  "envelope": "PS4MANAGER-MOD-RELEASE-V1\nreleaseId=aa6b9003-f0e2-4ee9-a8b5-f48cf3da73c2\nmodId=f8615e4a-cb7e-4cf7-8326-5464475f080e\nversion=1.0.0\npackageType=files\nsize=22\nsha256=1df802b4a11426eab0fab3eed3289ac86660ad4630c12b4786087fa7c9c23680\ncompatibility=CUSA00411@1.57\n",
+  "signature": "g5mgata0reJ7iDaOJOxNWneTVsvIsDJu2JRmlhydExk9ThIl4OKRYXMwOLm5w1+aJrKsfv8y571VtCH0bAzapUStyLYs/VTrXJrnIqcynw7be6bkiqL1U7h30GCeGyrX3Q4qLRjipWOhv0VYvi3va6fdt/VlMgJKmVL6DodiDq5CqegbJhrhm4KbuKdRH+eboBRlO+Vlpfqlsmu54CatmoWxWwLaJydTCgrJaUeSQ8f4OtzFleuvphXsYevW/QxR+G+TUvwS/rnVs1HjwoDX9lilhTikFZkljCmBte4BigQsB4H8mGSn0ewU6ZTioU3ZQ7f3pm6osd/cHOodsdE57A==",
+  "keyId": "6a8fcee4102b693d",
+  "publicKeyXml": "<RSAKeyValue><Modulus>w5ZIFeAeRrcS04zOhzJLeq3JFoNMZW1D3/qw9MontdduwayeENojG0IH8nZt3dy/ydlq2384OcIPxwp+ujNBskL1Ajze5iNJrFgjmMIvkClegAaA3nFPn6YsCNUvMs4gz2Z3CrpSamnn/cWOk7x9L02iUext8n5RLm4ABfUuN/gcI/qErYHCQWz1KSqCIPewQZiNS+kFFY3K9fAEa6IPGyp2RbwlA6kqcWjX5FvdJBVjmELKfegBNq5sv/9rtHPvA0LL8Qw4Wq/kdBqv+3EUcowDjNZaMGfKd3kxCM0PYQNrVAVVRI+xYygG3jSNUe7THzgX3qLEwQ7b5+O5k0eRbQ==</Modulus><Exponent>AQAB</Exponent></RSAKeyValue>",
+  "packageBase64": "c2lnbmVkIGZpeHR1cmUgcGFja2FnZQ=="
+}

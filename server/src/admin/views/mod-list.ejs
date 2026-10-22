@@ -1,0 +1,12 @@
+<%- include('layout') %>
+<% if (!mods.length) { %><p>Noch keine Mods angelegt. Erstelle einen Entwurf und lade anschließend das Paket hoch.</p><% } else { %>
+<div class="table-scroll"><table><thead><tr><th>Mod</th><th>Status</th></tr></thead><tbody>
+<% for (const mod of mods) { %><tr><td><a href="/admin/mods/<%= mod.id %>"><%= mod.title %></a></td><td><%= mod.state %></td></tr><% } %>
+</tbody></table></div><% } %>
+<details><summary>Neuen Mod anlegen</summary><form action="/api/admin/mods" data-redirect="/admin/mods/{id}">
+<label>Titel<input name="title" maxlength="255" required></label><label>URL-Kürzel<input name="slug" pattern="[a-z0-9]+(-[a-z0-9]+)*" maxlength="160" placeholder="mein-mod" required></label>
+<label>Autor<input name="author" maxlength="255" required></label><label>Kategorie<input name="category" maxlength="100" required></label>
+<label>Kurzbeschreibung<textarea name="summary" maxlength="1000" required></textarea></label><label>Beschreibung<textarea name="description" maxlength="16000" required></textarea></label><button>Entwurf anlegen</button>
+</form></details>
+<form action="/api/admin/logout" data-redirect="/admin/login"><button class="secondary">Abmelden</button></form>
+<%- include('footer') %>

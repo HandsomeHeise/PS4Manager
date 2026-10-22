@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <UseWindowsForms>false</UseWindowsForms>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.IO.Compression" />
+    <ProjectReference Include="..\Ps4.Core\Ps4.Core.csproj" />
+    <ProjectReference Include="..\FileManager.Core\FileManager.Core.csproj" />
+    <ProjectReference Include="..\PS4Manager.Gallery.Core\PS4Manager.Gallery.Core.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,8 @@
+<%- include('layout') %>
+<p>ZIP-Paket und offline signiertes JSON-Manifest hochladen. Der private Update-Schlüssel bleibt auf dem Entwicklerrechner.</p>
+<p>Die Version muss drei numerische Bestandteile enthalten, zum Beispiel 1.10.0. Vorabversionen verwenden den Kanal preview.</p>
+<form action="/api/admin/updates" method="post" data-upload data-update data-redirect="/admin/updates">
+<label>ZIP-Paket<input type="file" name="file" accept=".zip" required></label>
+<label>Signiertes Manifest<input type="file" name="manifest" accept=".json,application/json" required></label>
+<label class="check"><input type="checkbox" required> Ich möchte dieses signierte App-Update veröffentlichen.</label>
+<button>Update prüfen und veröffentlichen</button></form><%- include('footer') %>

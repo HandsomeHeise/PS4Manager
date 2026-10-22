@@ -1,0 +1,51 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "Curated mod catalog and update service for PS4 Manager",
+  "private": true,
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/copy-assets.mjs",
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js",
+    "lint": "eslint .",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:unit": "vitest run test/unit",
+    "test:integration": "vitest run test/integration",
+    "test:deployment": "node scripts/test-deployment.mjs",
+    "admin:create": "tsx scripts/create-admin.ts",
+    "update:sign": "tsx scripts/sign-update.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@fastify/cookie": "^11.1.2",
+    "@fastify/formbody": "^9.0.0",
+    "@fastify/multipart": "^10.1.2",
+    "@fastify/rate-limit": "^11.2.0",
+    "@fastify/view": "^12.0.0",
+    "ejs": "^6.0.1",
+    "fastify": "^5.12.5",
+    "mysql2": "^3.24.4",
+    "yauzl": "^3.4.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/ejs": "^3.1.5",
+    "@types/node": "^26.6.3",
+    "@types/yauzl": "^3.4.0",
+    "eslint": "^10.11.0",
+    "prettier": "^3.9.9",
+    "testcontainers": "^12.2.0",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.0",
+    "vitest": "^5.0.2"
+  }
+}

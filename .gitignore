@@ -1,0 +1,16 @@
+bin/
+obj/
+TestResults/
+artifacts/
+.vs/
+*.user
+.superpowers/
+.claude/
+server/node_modules/
+server/dist/
+server/.env
+server/coverage/
+server/.test-storage/
+server/secrets/
+server/tls/
+server/acme/

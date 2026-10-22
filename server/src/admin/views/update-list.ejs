@@ -1,0 +1,5 @@
+<%- include('layout') %>
+<p><a class="button" href="/admin/updates/upload">Signiertes Update hochladen</a></p>
+<div class="table-scroll"><table><thead><tr><th>Version</th><th>Kanal</th><th>Status</th><th>Aktion</th></tr></thead><tbody>
+<% for(const item of items) { %><tr><td><%= item.version %></td><td><%= item.channel %></td><td><%= item.state %></td><td><% if(item.state === 'published') { %><form action="/api/admin/updates/<%= item.id %>/withdraw" method="post"><label>Grund<input name="reason" maxlength="4000" required></label><button class="danger">Update zurückziehen</button></form><% } %></td></tr><% } %>
+</tbody></table></div><%- include('footer') %>

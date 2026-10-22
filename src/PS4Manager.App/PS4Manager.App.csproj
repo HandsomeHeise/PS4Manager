@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>PS4Manager</AssemblyName>
+    <RootNamespace>PS4Manager.App</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\..\assets\icon_file_manager.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="..\..\assets\icon_file_manager.ico" Link="icon_file_manager.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PS4Manager.Core\PS4Manager.Core.csproj" />
+    <ProjectReference Include="..\PS4Manager.Updater\PS4Manager.Updater.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\FileManager.App\FileManager.App.csproj" />
+    <ProjectReference Include="..\PS4Manager.Gallery.App\PS4Manager.Gallery.App.csproj" />
+  </ItemGroup>
+  <Target Name="CopyUpdater" AfterTargets="Build">
+    <Copy SourceFiles="..\PS4Manager.Updater\bin\$(Configuration)\$(TargetFramework)\PS4Manager.Updater.exe"
+          DestinationFolder="$(OutputPath)"
+          SkipUnchangedFiles="true"
+          Condition="Exists('..\PS4Manager.Updater\bin\$(Configuration)\$(TargetFramework)\PS4Manager.Updater.exe')" />
+  </Target>
+  <ItemGroup><ProjectReference Include="..\PS4Manager.UI\PS4Manager.UI.csproj" /></ItemGroup>
+</Project>

@@ -1,0 +1,18 @@
+<%- include('layout') %>
+<p><%= mod.title %> · <span class="state"><%= mod.state %></span></p>
+<form action="/api/admin/mods/<%= mod.id %>" data-method="PUT">
+<fieldset <%= mod.state !== 'draft' ? 'disabled' : '' %>><legend>Mod-Beschreibung</legend>
+<% for (const [key,label] of [['title','Titel'],['slug','URL-Kürzel'],['author','Autor'],['category','Kategorie']]) { %>
+<label><%= label %><input name="<%= key %>" value="<%= mod[key] %>" required></label><% } %>
+<label>Kurzbeschreibung<textarea name="summary" maxlength="1000" required><%= mod.summary %></textarea></label><label>Beschreibung<textarea name="description" maxlength="16000" required><%= mod.description %></textarea></label><button>Beschreibung speichern</button></fieldset></form>
+<h2>Releases</h2><ul><% for (const r of mod.releases) { %><li><a href="/admin/releases/<%= r.id %>"><%= r.version %></a> — <%= r.state %></li><% } %></ul>
+<details><summary>Neuen Release vorbereiten</summary><form action="/api/admin/mods/<%= mod.id %>/releases" data-redirect="/admin/releases/{id}">
+<label>Version<input name="version" placeholder="1.0.0" required></label><label>Pakettyp<select name="packageType"><option value="files">Dateien</option><option value="luma-script">Luma-Skript</option></select></label>
+<label>Änderungen<textarea name="changelog" required></textarea></label><label>Exakte Kompatibilität (JSON)<textarea name="compatibility" class="code" required>[{"titleId":"CUSA00411","gameVersion":"1.57"}]</textarea></label><button>Release-Entwurf anlegen</button></form></details>
+<h2>Vorschaumedien</h2><ol><% for (const media of mod.media) { %><li>Position <%= media.position %>: <%= media.kind %></li><% } %></ol>
+<% if (mod.state === 'draft' && mod.media.length > 1) { %><form action="/api/admin/mods/<%= mod.id %>/media" data-method="PUT"><label>Medien-IDs in gewünschter Reihenfolge (JSON)<textarea name="order" class="code" required><%= JSON.stringify(mod.media.map(m => m.id), null, 2) %></textarea></label><button>Reihenfolge speichern</button></form><% } %>
+<% if (mod.state === 'draft') { %><form action="/api/admin/mods/<%= mod.id %>/media" data-upload data-media>
+<label>Medientyp<select name="kind"><option value="cover">Cover</option><option value="screenshot">Screenshot</option><option value="video">Video</option></select></label>
+<label>Position (0–99, noch nicht belegt)<input name="position" type="number" min="0" max="99" value="0" required></label>
+<label>Datei (PNG, JPEG oder MP4)<input name="file" type="file" accept="image/png,image/jpeg,video/mp4" required></label><button>Vorschau hochladen</button></form><% } %>
+<%- include('footer') %>

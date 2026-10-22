@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <AssemblyName>PS4FileManager</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ps4.Core\Ps4.Core.csproj" />
+    <ProjectReference Include="..\FileManager.Core\FileManager.Core.csproj" />
+    <ProjectReference Include="..\PS4Manager.Core\PS4Manager.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup><ProjectReference Include="..\PS4Manager.UI\PS4Manager.UI.csproj" /></ItemGroup>
+</Project>

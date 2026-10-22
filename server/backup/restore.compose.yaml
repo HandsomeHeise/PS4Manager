@@ -1,0 +1,4 @@
+services:
+  backup:
+    volumes:
+      - artifact_data:/var/lib/ps4manager

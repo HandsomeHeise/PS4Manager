@@ -1,0 +1,9 @@
+<%- include('layout') %>
+<p>Mit Administratorkonto und einem unbenutzten Code aus deiner Authenticator-App anmelden.</p>
+<form action="/api/admin/login" method="post" data-login data-redirect="/admin/mods">
+<label>Benutzername<input name="username" autocomplete="username" maxlength="100" required></label>
+<label>Passwort<input name="password" type="password" autocomplete="current-password" required></label>
+<label>Authenticator-Code<input name="totp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required></label>
+<button>Anmelden</button></form>
+<noscript>Für Anmeldung und Speichern muss JavaScript aktiviert sein.</noscript>
+<%- include('footer') %>

@@ -1,0 +1,25 @@
+<Project>
+  <PropertyGroup>
+    <DevExpressVersion>25.2</DevExpressVersion>
+    <DevExpressPackageVersion Condition="'$(DevExpressPackageVersion)' == ''">25.2.4</DevExpressPackageVersion>
+    <DevExpressInstallDir Condition="'$(DevExpressInstallDir)' == ''">C:\Program Files\DevExpress 25.2\Components\Bin\Framework</DevExpressInstallDir>
+    <DevExpressLicenseGeneratorPath Condition="'$(DevExpressLicenseGeneratorPath)' == ''">$(DevExpressInstallDir)\..\..\Offline Packages\devexpress.data\$(DevExpressPackageVersion)\analyzers\dotnet\DevExpress.Generator.dll</DevExpressLicenseGeneratorPath>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'PS4Manager.UI' Or '$(MSBuildProjectName)' == 'PS4Manager.App' Or '$(MSBuildProjectName)' == 'FileManager.App' Or '$(MSBuildProjectName)' == 'PS4Manager.Gallery.App' Or '$(MSBuildProjectName)' == 'PS4Manager.Core.Tests'">
+    <Analyzer Include="$(DevExpressLicenseGeneratorPath)" />
+    <Reference Include="DevExpress.Data.v$(DevExpressVersion)"><HintPath>$(DevExpressInstallDir)\DevExpress.Data.v$(DevExpressVersion).dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="DevExpress.Data.Desktop.v$(DevExpressVersion)"><HintPath>$(DevExpressInstallDir)\DevExpress.Data.Desktop.v$(DevExpressVersion).dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="DevExpress.Utils.v$(DevExpressVersion)"><HintPath>$(DevExpressInstallDir)\DevExpress.Utils.v$(DevExpressVersion).dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="DevExpress.Drawing.v$(DevExpressVersion)"><HintPath>$(DevExpressInstallDir)\DevExpress.Drawing.v$(DevExpressVersion).dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="DevExpress.Printing.v$(DevExpressVersion).Core"><HintPath>$(DevExpressInstallDir)\DevExpress.Printing.v$(DevExpressVersion).Core.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="DevExpress.XtraEditors.v$(DevExpressVersion)"><HintPath>$(DevExpressInstallDir)\DevExpress.XtraEditors.v$(DevExpressVersion).dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="DevExpress.XtraBars.v$(DevExpressVersion)"><HintPath>$(DevExpressInstallDir)\DevExpress.XtraBars.v$(DevExpressVersion).dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="DevExpress.XtraGrid.v$(DevExpressVersion)"><HintPath>$(DevExpressInstallDir)\DevExpress.XtraGrid.v$(DevExpressVersion).dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="DevExpress.XtraTreeList.v$(DevExpressVersion)"><HintPath>$(DevExpressInstallDir)\DevExpress.XtraTreeList.v$(DevExpressVersion).dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="DevExpress.XtraLayout.v$(DevExpressVersion)"><HintPath>$(DevExpressInstallDir)\DevExpress.XtraLayout.v$(DevExpressVersion).dll</HintPath><Private>true</Private></Reference>
+  </ItemGroup>
+  <Target Name="CheckDevExpressInstallation" BeforeTargets="ResolveAssemblyReferences" Condition="'$(MSBuildProjectName)' == 'PS4Manager.UI'">
+    <Error Condition="!Exists('$(DevExpressInstallDir)\DevExpress.XtraEditors.v$(DevExpressVersion).dll')" Text="DevExpress WinForms 25.2 is required. Set DevExpressInstallDir to its Framework assembly directory." />
+    <Error Condition="!Exists('$(DevExpressLicenseGeneratorPath)')" Text="DevExpress's build-time license generator is required. Set DevExpressPackageVersion or DevExpressLicenseGeneratorPath for your installation." />
+  </Target>
+</Project>

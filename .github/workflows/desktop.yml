@@ -11,10 +11,14 @@ concurrency:
   group: desktop-${{ github.ref }}
   cancel-in-progress: false
 jobs:
+  source-checks:
+    if: startsWith(github.ref, 'refs/tags/v')
+    uses: ./.github/workflows/checks.yml
   desktop:
     # The private runner uses the owner's installed DevExpress development tools.
     # It does not execute pull-request workflows or store proprietary DLLs in Git.
-    if: github.repository == 'HandsomeHeise/PS4Manager'
+    needs: source-checks
+    if: ${{ !cancelled() && github.repository == 'HandsomeHeise/PS4Manager' && (needs.source-checks.result == 'success' || needs.source-checks.result == 'skipped') }}
     runs-on: [self-hosted, Windows, X64, ps4manager-devexpress]
     timeout-minutes: 30
     permissions:
@@ -39,6 +43,9 @@ jobs:
       - name: Test complete desktop solution
         shell: pwsh
         run: dotnet test PS4Manager.sln -c Release --no-build --logger trx --results-directory artifacts/test-results -v minimal
+      - name: Test x86 Lua and Scintilla runtimes
+        shell: pwsh
+        run: dotnet test tests/PS4Manager.Core.Tests -c Release --no-build --filter 'FullyQualifiedName~Luma.Studio|FullyQualifiedName~LumaStudioFormTests' --logger 'trx;LogFileName=luma-x86.trx' --results-directory artifacts/test-results/x86 -- RunConfiguration.TargetPlatform=x86
       - name: Verify and package
         shell: pwsh
         run: |
@@ -51,7 +58,7 @@ jobs:
           path: |
             artifacts/PS4Manager-Windows.zip
             artifacts/desktop-build.log
-            artifacts/test-results/*.trx
+            artifacts/test-results/**/*.trx
           if-no-files-found: error
           retention-days: 14
       - name: Create private tag release

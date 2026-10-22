@@ -19,7 +19,8 @@ namespace PS4Manager.App
             loading = true;
             try {
                 game.SelectedIndex = settings.Luma.Game == "rdr2" ? 1 : 0;
-                host.Text = settings.Ip ?? ""; port.Text = settings.Luma.Port.ToString(CultureInfo.InvariantCulture); token.Text = settings.Luma.Token ?? "";
+                host.Text = settings.Ip ?? ""; port.Text = Profile == "gta5" ? "9615" : "9616"; token.Text = settings.Luma.Token ?? "";
+                port.Properties.ReadOnly = true;
             } finally { loading = false; }
         }
         private async Task ConnectStudioAsync()
@@ -52,15 +53,13 @@ namespace PS4Manager.App
         {
             var buffer = ActiveBuffer; if (buffer == null || busy || !connection.Connected) return;
             string fileName = Path.GetFileName(buffer.Document.FilePath ?? buffer.Document.Title);
-            // Filename is validated by the core. An unsaved default buffer still has an explicit target.
-            string source = buffer.Document.Source, profile = connection.Profile;
-            long generation = connection.Generation;
-            string remote = (profile == "gta5" ? "/data/gtalua/" : "/data/rdr2lua/") + "scripts/" + fileName;
-            if (XtraMessageBox.Show(this,
-                "Upload this buffer to " + host.Text + ":" + port.Text + "?\r\n\r\n" + (profile == "gta5" ? "GTA V" : "Red Dead Redemption 2") + "\r\n" + remote +
-                "\r\n\r\nAn existing file at this path will be REPLACED.\r\nScripts will NOT be executed or reloaded. Use Reload separately when ready.",
+            string source = buffer.Document.Source;
+            StudioUploadPlan plan;
+            try { plan = connection.PrepareUpload(fileName); }
+            catch (Exception ex) { status.Text = "Upload unavailable: " + ex.Message; return; }
+            if (XtraMessageBox.Show(this, plan.ConfirmationText,
                 "Confirm Lua upload / replacement", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
-            await RunRemoteAsync("Upload", ct => connection.UploadAsync(fileName, source, generation, ct));
+            await RunRemoteAsync("Upload", ct => connection.UploadAsync(plan, source, ct));
         }
         private async Task RunRemoteAsync(string operation, Func<CancellationToken, Task<string>> action, bool silent = false)
         {

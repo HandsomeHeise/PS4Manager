@@ -11,14 +11,19 @@ syntax checks work without a console. No connection is made automatically.
    debounced while typing. Double-click a diagnostic to navigate to its line.
 3. For live operations, start the matching game with Luma active, close other Luma
    control clients (including VS Code), enter the console address/port/token and
-   press **Connect**. GTA V defaults to 9615; RDR2 defaults to 9616.
+   press **Connect**. V1 requires GTA V on 9615 or RDR2 on 9616; custom forwarded
+   ports are not supported. The current protocol cannot report the game's identity.
 4. **Execute** runs the current buffer once, including unsaved edits. **Upload**
    writes the current buffer to a simple `.lua` filename under the game's scripts
-   directory. Its confirmation names the console, game and exact replacement path.
+   directory. Confirmation names the captured console endpoint, selected game,
+   exact relative replacement path and explicitly unverified expected sandbox.
 5. Upload does **not** reload or execute. Press **Reload** separately when ready.
    It reloads the game's scripts, not just the current editor tab.
 
-GTA V uses `/data/gtalua/scripts`; RDR2 uses `/data/rdr2lua/scripts`. An upload
+GTA V normally uses `/data/gtalua/scripts`; RDR2 normally uses `/data/rdr2lua/scripts`.
+PUT sends the relative `scripts/<filename>` path, resolved by the connected plugin
+under its own game's sandbox. Confirm the correct game is running: the client
+does not claim to verify that root from HELLO. An upload
 can replace an existing script, so keep a local copy. Choose Save as to rename
 an unsaved file or a remote target. Lua upload filenames allow ASCII letters,
 digits, underscore, dash and dots; no directories or traversal.

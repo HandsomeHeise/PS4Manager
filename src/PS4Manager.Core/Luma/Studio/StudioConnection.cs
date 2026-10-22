@@ -22,6 +22,7 @@ namespace PS4Manager.Core.Luma.Studio
             public readonly CancellationTokenSource Lifetime = new CancellationTokenSource();
             public long Id;
             public string Profile;
+            public LumaEndpoint Endpoint;
             public bool Ready;
         }
         private readonly object sync = new object();
@@ -43,11 +44,14 @@ namespace PS4Manager.Core.Luma.Studio
         public async Task<string> ConnectAsync(LumaEndpoint endpoint, string profile, string token, CancellationToken ct)
         {
             LuaApiCatalog.ForProfile(profile); // Reject unknown game before replacing a session.
+            int expectedPort = profile == "gta5" ? LumaEndpoint.GtaPort : LumaEndpoint.Rdr2Port;
+            if (endpoint == null || endpoint.Port != expectedPort)
+                throw new ArgumentException("Luma Studio v1 requires " + profile + " on its standard port " + expectedPort + ".", nameof(endpoint));
             Disconnect();
             Session session;
             lock (sync) {
                 if (disposed) throw new ObjectDisposedException(nameof(StudioConnection));
-                session = new Session { Client = createClient(), Profile = profile, Id = ++nextId };
+                session = new Session { Client = createClient(), Profile = profile, Endpoint = endpoint, Id = ++nextId };
                 current = session;
             }
             session.Client.LogReceived += (s, e) => {
@@ -75,6 +79,19 @@ namespace PS4Manager.Core.Luma.Studio
         { Validate(source); return RunAsync((c, t) => c.ExecuteAsync(source, chunkName, t), ct); }
         public Task<string> UploadAsync(string name, string source, long authorizedGeneration, CancellationToken ct)
         { Validate(source); return RunAsync((c, t) => c.UploadScriptAsync(name, source, t), ct, authorizedGeneration); }
+        public StudioUploadPlan PrepareUpload(string fileName)
+        {
+            LumaClient.ValidateUploadFileName(fileName);
+            lock (sync) {
+                if (current == null || !current.Ready || !current.Client.Connected) throw new LumaException("Connect to Luma first.");
+                return new StudioUploadPlan(current.Id, current.Profile, current.Endpoint, fileName);
+            }
+        }
+        public Task<string> UploadAsync(StudioUploadPlan plan, string source, CancellationToken ct)
+        {
+            if (plan == null) throw new ArgumentNullException(nameof(plan));
+            return UploadAsync(plan.FileName, source, plan.Generation, ct);
+        }
         public Task<string> ReloadAsync(CancellationToken ct) => RunAsync((c, t) => c.ReloadAsync(t), ct);
         public Task<string> PollAsync(CancellationToken ct) => RunAsync((c, t) => c.PingAsync(t), ct);
 

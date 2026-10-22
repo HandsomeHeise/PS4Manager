@@ -93,6 +93,36 @@ namespace PS4Manager.Core.Tests.Luma.Studio
 
         private static StudioConnection Create(ReplyTransport transport) => new StudioConnection(() => new LumaClient(transport, 1));
 
+        [Theory]
+        [InlineData("gta5", 9616)]
+        [InlineData("rdr2", 9615)]
+        public async Task Mismatched_profile_endpoint_is_rejected_before_authentication_or_upload(string profile, int port)
+        {
+            var transport = new ReplyTransport();
+            using (var session = Create(transport)) {
+                await Assert.ThrowsAsync<ArgumentException>(() => session.ConnectAsync(new LumaEndpoint("offline.test", port), profile, "", CancellationToken.None));
+                Assert.Empty(transport.Operations);
+                Assert.False(session.Connected);
+            }
+        }
+        [Fact]
+        public async Task Upload_plan_names_the_actual_relative_target_and_explicitly_unverified_sandbox()
+        {
+            var transport = new ReplyTransport();
+            using (var session = Create(transport)) {
+                await session.ConnectAsync(new LumaEndpoint("offline.test", 9615), "gta5", "", CancellationToken.None);
+                var plan = session.PrepareUpload("hello.lua");
+                Assert.Equal("scripts/hello.lua", plan.RelativePath);
+                Assert.Contains("not verified", plan.ConfirmationText);
+                Assert.Contains("offline.test:9615", plan.ConfirmationText);
+                Assert.Contains("correct game", plan.ConfirmationText);
+                await session.UploadAsync(plan, "return 1", CancellationToken.None);
+                Assert.Equal(plan.RelativePath + "\0return 1", transport.Payloads.Last());
+                session.Disconnect();
+                await Assert.ThrowsAnyAsync<OperationCanceledException>(() => session.UploadAsync(plan, "return 1", CancellationToken.None));
+            }
+        }
+
         private sealed class ReplyTransport : ILumaTransport
         {
             public readonly System.Collections.Generic.List<LumaOperation> Operations = new System.Collections.Generic.List<LumaOperation>();

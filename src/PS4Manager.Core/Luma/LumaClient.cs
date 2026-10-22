@@ -79,9 +79,7 @@ namespace PS4Manager.Core.Luma
 
         public Task<string> UploadScriptAsync(string fileName, string source, CancellationToken ct)
         {
-            if (fileName == null || !System.Text.RegularExpressions.Regex.IsMatch(fileName,
-                @"\A[A-Za-z0-9][A-Za-z0-9_.-]{0,99}\.lua\z", System.Text.RegularExpressions.RegexOptions.CultureInvariant))
-                throw new ArgumentException("Use a simple Lua filename, without folders (example: hello.lua).", nameof(fileName));
+            ValidateUploadFileName(fileName);
             var bytes = Encoding.UTF8.GetBytes(source ?? "");
             if (bytes.Length > 1024 * 1024) throw new ArgumentException("Lua source exceeds 1 MiB.", nameof(source));
             var prefix = Encoding.UTF8.GetBytes("scripts/" + fileName + "\0");
@@ -89,6 +87,13 @@ namespace PS4Manager.Core.Luma
             Buffer.BlockCopy(prefix, 0, payload, 0, prefix.Length);
             Buffer.BlockCopy(bytes, 0, payload, prefix.Length, bytes.Length);
             return TextCommandAsync(LumaOperation.Put, payload, "PUT", ct);
+        }
+
+        internal static void ValidateUploadFileName(string fileName)
+        {
+            if (fileName == null || !System.Text.RegularExpressions.Regex.IsMatch(fileName,
+                @"\A[A-Za-z0-9][A-Za-z0-9_.-]{0,99}\.lua\z", System.Text.RegularExpressions.RegexOptions.CultureInvariant))
+                throw new ArgumentException("Use a simple Lua filename, without folders (example: hello.lua).", nameof(fileName));
         }
 
         public async Task<string> CommandAsync(string command, CancellationToken ct)
@@ -127,6 +132,14 @@ namespace PS4Manager.Core.Luma
             using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct))
             {
                 if (RequestTimeoutMilliseconds > 0) timeout.CancelAfter(RequestTimeoutMilliseconds);
+                // net48 NetworkStream does not abort an in-flight read when its token
+                // is cancelled. Close this exact stream; never a later connection.
+                using (timeout.Token.Register(() => {
+                    if (ReferenceEquals(Interlocked.CompareExchange(ref _connection, null, connection), connection)) {
+                        try { connection.Dispose(); } catch { /* The pending I/O reports the cancellation. */ }
+                    }
+                }))
+                {
                 try
                 {
                     var sequence = _nextSequence;
@@ -145,14 +158,17 @@ namespace PS4Manager.Core.Luma
                                 OnLog(reply.Text);
                             continue;
                         }
-                        if (reply.Sequence == sequence) return reply;
+                        if (reply.Sequence == sequence) { timeout.Token.ThrowIfCancellationRequested(); return reply; }
                     }
                 }
-                catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+                catch (Exception ex) when (timeout.IsCancellationRequested &&
+                    (ex is OperationCanceledException || ex is System.IO.IOException || ex is ObjectDisposedException || ex is System.Net.Sockets.SocketException))
                 {
                     Disconnect();
+                    if (ct.IsCancellationRequested) throw new OperationCanceledException("Luma request cancelled.", ex, ct);
                     throw new LumaException("Luma did not answer within " + RequestTimeoutMilliseconds +
                                             " ms. Disconnect VS Code or any other client and try again.");
+                }
                 }
             }
         }

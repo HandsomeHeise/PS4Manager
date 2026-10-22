@@ -40,9 +40,7 @@ namespace PS4Manager.Core.Luma
 
         public void Disconnect()
         {
-            if (_connection == null) return;
-            _connection.Dispose();
-            _connection = null;
+            Interlocked.Exchange(ref _connection, null)?.Dispose();
         }
 
         public async Task<string> HelloAsync(string token, CancellationToken ct)
@@ -68,8 +66,29 @@ namespace PS4Manager.Core.Luma
 
         public async Task<string> ExecuteAsync(string lua, CancellationToken ct)
         {
-            var payload = Encoding.UTF8.GetBytes("console\0" + (lua ?? ""));
+            return await ExecuteAsync(lua, "console", ct).ConfigureAwait(false);
+        }
+
+        public async Task<string> ExecuteAsync(string lua, string chunkName, CancellationToken ct)
+        {
+            if (string.IsNullOrEmpty(chunkName) || chunkName.Length > 100 || chunkName.IndexOf('\0') >= 0)
+                throw new ArgumentException("Invalid Lua chunk label.", nameof(chunkName));
+            var payload = Encoding.UTF8.GetBytes(chunkName + "\0" + (lua ?? ""));
             return await TextCommandAsync(LumaOperation.Exec, payload, "EXEC", ct).ConfigureAwait(false);
+        }
+
+        public Task<string> UploadScriptAsync(string fileName, string source, CancellationToken ct)
+        {
+            if (fileName == null || !System.Text.RegularExpressions.Regex.IsMatch(fileName,
+                @"\A[A-Za-z0-9][A-Za-z0-9_.-]{0,99}\.lua\z", System.Text.RegularExpressions.RegexOptions.CultureInvariant))
+                throw new ArgumentException("Use a simple Lua filename, without folders (example: hello.lua).", nameof(fileName));
+            var bytes = Encoding.UTF8.GetBytes(source ?? "");
+            if (bytes.Length > 1024 * 1024) throw new ArgumentException("Lua source exceeds 1 MiB.", nameof(source));
+            var prefix = Encoding.UTF8.GetBytes("scripts/" + fileName + "\0");
+            var payload = new byte[prefix.Length + bytes.Length];
+            Buffer.BlockCopy(prefix, 0, payload, 0, prefix.Length);
+            Buffer.BlockCopy(bytes, 0, payload, prefix.Length, bytes.Length);
+            return TextCommandAsync(LumaOperation.Put, payload, "PUT", ct);
         }
 
         public async Task<string> CommandAsync(string command, CancellationToken ct)
@@ -103,7 +122,8 @@ namespace PS4Manager.Core.Luma
 
         private async Task<LumaFrame> RequestAsync(LumaOperation operation, byte[] payload, CancellationToken ct)
         {
-            if (_connection == null) throw new LumaException("Luma is not connected.");
+            var connection = Volatile.Read(ref _connection);
+            if (connection == null) throw new LumaException("Luma is not connected.");
             using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct))
             {
                 if (RequestTimeoutMilliseconds > 0) timeout.CancelAfter(RequestTimeoutMilliseconds);
@@ -112,12 +132,12 @@ namespace PS4Manager.Core.Luma
                     var sequence = _nextSequence;
                     _nextSequence = _nextSequence == ushort.MaxValue ? (ushort)1 : (ushort)(_nextSequence + 1);
                     var frame = LumaProtocol.EncodeFrame(operation, sequence, payload);
-                    await _connection.Write.WriteAsync(frame, 0, frame.Length, timeout.Token).ConfigureAwait(false);
-                    await _connection.Write.FlushAsync(timeout.Token).ConfigureAwait(false);
+                    await connection.Write.WriteAsync(frame, 0, frame.Length, timeout.Token).ConfigureAwait(false);
+                    await connection.Write.FlushAsync(timeout.Token).ConfigureAwait(false);
 
                     for (;;)
                     {
-                        var reply = await LumaProtocol.ReadFrameAsync(_connection.Read, timeout.Token)
+                        var reply = await LumaProtocol.ReadFrameAsync(connection.Read, timeout.Token)
                             .ConfigureAwait(false);
                         if (reply.Sequence == 0)
                         {

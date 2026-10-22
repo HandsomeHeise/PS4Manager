@@ -7,3 +7,5 @@ The repository is private at https://github.com/HandsomeHeise/PS4Manager. Git co
 Pushing `v*` tags automatically builds, tests, packages and creates a private Release. Builds with DX1000/DX1001/DX1002 license diagnostics are explicitly marked prerelease/evaluation. Register an eligible DevExpress license before distributing outside the owner's private evaluation. No license key is put in Git or a release archive.
 
 The runner must be online. Its registration credentials and diagnostic logs stay in the owner's local runner installation outside this repository. Removing that runner in repository Settings → Actions → Runners disables desktop builds without affecting hosted source checks.
+
+Current local runner: `PS4Manager-DevExpress`. It starts hidden at user logon through `PS4Manager GitHub Runner.lnk` in the current user's Startup folder. Its installation is `%LocalAppData%\PS4Manager\ci-runner`; a per-user mutex prevents duplicate listeners. The runner must remain dedicated to this private repository.

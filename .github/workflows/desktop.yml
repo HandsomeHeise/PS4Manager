@@ -3,6 +3,7 @@ on:
   push:
     branches: [main, 'codex/**']
     tags: ['v*']
+    paths-ignore: ['server/**', 'docs/**', '.github/workflows/checks.yml']
   workflow_dispatch:
 permissions:
   contents: read

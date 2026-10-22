@@ -37,4 +37,8 @@ jobs:
       - run: npm run lint
       - run: npm run build
       - run: npm run test:unit
+      - name: Build isolated deployment test images
+        run: |
+          docker build -t ps4manager-mods-api -f Dockerfile .
+          docker build -t ps4manager-mods-backup -f backup/Dockerfile .
       - run: npm run test:deployment

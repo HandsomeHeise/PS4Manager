@@ -35,3 +35,15 @@ the release is private owner evaluation only.
 Deferred Minor: only the last Execute retains clickable runtime provenance.
 Errors from earlier callbacks remain console text; they are never attributed
 to a newer buffer. No other reviewer behavior was declined or left unassessed.
+
+## Published verification
+
+Private preview: https://github.com/HandsomeHeise/PS4Manager/releases/tag/v0.2.0-luma-studio-preview
+
+Tag workflow 39725794209 passed all three jobs (hosted core, hosted server,
+desktop). The actual downloaded 34-file release asset was extracted and smoke
+tested under both x64 and x86: native Lua, DevExpress Studio and Scintilla/Lexilla
+loaded successfully without connecting to a console.
+
+Asset SHA256, verified against GitHub's published digest:
+`1808dcfb51dc724d8cfbc0252e2ea205e702d6180b2ffe0709cda13c4f4a156c`.

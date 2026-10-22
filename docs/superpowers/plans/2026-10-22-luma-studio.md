@@ -28,34 +28,34 @@
 ### Task 1: Private repository and CI
 
 Files: .github/workflows/checks.yml, desktop.yml, docs/github-builds.md, .gitignore.
-- [ ] Scan a clean copy of the latest source; create/verify private GitHub repository and commit baseline.
-- [ ] Register a dedicated local runner, push, and verify hosted/source and desktop build jobs.
-- [ ] Create a version tag and verify its private evaluation release.
+- [x] Scan a clean copy of the latest source; create/verify private GitHub repository and commit baseline.
+- [x] Register a dedicated local runner, push, and verify hosted/source and desktop build jobs.
+- [x] Create a version tag and verify its private evaluation release.
 
 ### Task 2: Checker, API and document core
 
 Files: native/lua54/*, scripts/build-lua.ps1, src/PS4Manager.Core/Luma/Studio/*, tests/PS4Manager.Core.Tests/Luma/Studio/*.
 Interfaces: LuaSyntaxChecker.Check(string source, string fileName); LuaApiCatalog.ForProfile(string profile); StudioDocument.Load/Save with source/version/dirty state; compile diagnostics carry document path and line.
-- [ ] Write tests for Lua 5.4 constructs, compile-only behavior, bytecode/size rejection, UTF-8 and line errors, profile separation and safe file save conflicts.
-- [ ] Implement bounded compile-only native checking, definition parsing, templates and document/project models; verify tests and commit.
+- [x] Write tests for Lua 5.4 constructs, compile-only behavior, bytecode/size rejection, UTF-8 and line errors, profile separation and safe file save conflicts.
+- [x] Implement bounded compile-only native checking, definition parsing, templates and document/project models; verify tests and commit.
 
 ### Task 3: Serialized Luma operations
 
 Files: src/PS4Manager.Core/Luma/Studio/StudioConnection.cs, LumaClient.cs, tests/Luma/Studio/*.
 Interfaces: ConnectAsync, ExecuteAsync, UploadAsync, ReloadAsync, PollAsync, Disconnect; log/diagnostic events carry the session generation.
-- [ ] Test authentication, PUT framing/path validation, separation of operations, cancellation/reconnect and stale output with fake protocol transports.
-- [ ] Implement, verify and commit.
+- [x] Test authentication, PUT framing/path validation, separation of operations, cancellation/reconnect and stale output with fake protocol transports.
+- [x] Implement, verify and commit.
 
 ### Task 4: Studio UI
 
 Files: src/PS4Manager.App/LumaStudio/*, DashboardForm*.cs, PS4Manager.App.csproj, scripts/client-runtime.json.
-- [ ] Integrate Scintilla into DevExpress tabs/tree, toolbar, diagnostics, console and API help.
-- [ ] Add new/open/save/project, close prompts, debounced compile, completion/call tips/folding/find, templates and keyboard navigation.
-- [ ] Connect separate actions to the tested core, replace dashboard Luma entry with the Studio, and verify UI/session lifecycle with deterministic tests.
-- [ ] Commit the working Studio.
+- [x] Integrate Scintilla into DevExpress tabs/tree, toolbar, diagnostics, console and API help.
+- [x] Add new/open/save/project, close prompts, debounced compile, completion/call tips/folding/find, templates and keyboard navigation.
+- [x] Connect separate actions to the tested core, replace dashboard Luma entry with the Studio, and verify UI/session lifecycle with deterministic tests.
+- [x] Commit the working Studio.
 
 ### Task 5: Review, package, release
 
-- [ ] Complete solution/server checks, offline UI rendering and runtime dependency verification.
-- [ ] Obtain one independent review, fix supported blockers and record remaining limits.
-- [ ] Push the completed source, create a preview tag, verify private CI/release and deliver the checked ZIP.
+- [x] Complete solution/server checks, offline UI rendering and runtime dependency verification.
+- [x] Obtain one independent review, fix supported blockers and record remaining limits.
+- [x] Push the completed source, create a preview tag, verify private CI/release and deliver the checked ZIP.

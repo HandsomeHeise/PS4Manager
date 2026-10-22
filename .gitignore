@@ -4,6 +4,7 @@ TestResults/
 artifacts/
 .vs/
 *.user
+*.log
 .superpowers/
 .claude/
 server/node_modules/

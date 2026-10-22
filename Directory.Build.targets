@@ -5,6 +5,10 @@
     <DevExpressInstallDir Condition="'$(DevExpressInstallDir)' == ''">C:\Program Files\DevExpress 25.2\Components\Bin\Framework</DevExpressInstallDir>
     <DevExpressLicenseGeneratorPath Condition="'$(DevExpressLicenseGeneratorPath)' == ''">$(DevExpressInstallDir)\..\..\Offline Packages\devexpress.data\$(DevExpressPackageVersion)\analyzers\dotnet\DevExpress.Generator.dll</DevExpressLicenseGeneratorPath>
   </PropertyGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'PS4Manager.Core' Or '$(MSBuildProjectName)' == 'PS4Manager.App' Or '$(MSBuildProjectName)' == 'PS4Manager.Core.Tests'">
+    <None Include="$(MSBuildThisFileDirectory)artifacts\native\lua54-x64.dll" Link="lua54-x64.dll" CopyToOutputDirectory="PreserveNewest" Condition="Exists('$(MSBuildThisFileDirectory)artifacts\native\lua54-x64.dll')" />
+    <None Include="$(MSBuildThisFileDirectory)artifacts\native\lua54-x86.dll" Link="lua54-x86.dll" CopyToOutputDirectory="PreserveNewest" Condition="Exists('$(MSBuildThisFileDirectory)artifacts\native\lua54-x86.dll')" />
+  </ItemGroup>
   <ItemGroup Condition="'$(MSBuildProjectName)' == 'PS4Manager.UI' Or '$(MSBuildProjectName)' == 'PS4Manager.App' Or '$(MSBuildProjectName)' == 'FileManager.App' Or '$(MSBuildProjectName)' == 'PS4Manager.Gallery.App' Or '$(MSBuildProjectName)' == 'PS4Manager.Core.Tests'">
     <Analyzer Include="$(DevExpressLicenseGeneratorPath)" />
     <Reference Include="DevExpress.Data.v$(DevExpressVersion)"><HintPath>$(DevExpressInstallDir)\DevExpress.Data.v$(DevExpressVersion).dll</HintPath><Private>true</Private></Reference>

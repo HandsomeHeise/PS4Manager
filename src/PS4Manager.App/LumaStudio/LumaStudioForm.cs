@@ -21,6 +21,7 @@ namespace PS4Manager.App
             public StudioDocument Document;
             public Scintilla Editor;
             public XtraTabPage Page;
+            public UiLabel Breadcrumb;
             public LuaCheckResult Check;
             public long CheckedVersion = -1;
         }
@@ -63,7 +64,7 @@ namespace PS4Manager.App
             StartPosition = FormStartPosition.CenterParent;
             BuildStudio(); LoadConnectionSettings(); RefreshProfile();
             AddDocument(new StudioDocument("hello.lua", StudioTemplates.ForProfile(Profile)[0].Source));
-            documents.SelectedPageChanged += (s, e) => { ShowDiagnostics(); UpdateCommands(); };
+            documents.SelectedPageChanged += (s, e) => { ShowDiagnostics(); RefreshEditorChrome(); UpdateCommands(); };
             documents.CloseButtonClick += (s, e) => { if (ActiveBuffer != null) TryCloseDocument(ActiveDocument.Id, ConfirmClose); };
             diagnostics.DoubleClick += (s, e) => NavigateDiagnostic(diagnostics.SelectedIndex);
             checkTimer.Tick += async (s, e) => { checkTimer.Stop(); await CheckDocumentAsync(); };
@@ -104,41 +105,26 @@ namespace PS4Manager.App
             connectionBar.Controls.AddRange(new Control[] { game, host, port, token });
             AddButton(connectionBar, "Connect", async () => await ConnectStudioAsync());
             AddButton(connectionBar, "Disconnect", DisconnectStudio);
-            connectionBar.Controls.Add(new UiLabel { Text = "Find", Padding = new Padding(6) }); connectionBar.Controls.Add(find);
-            AddButton(connectionBar, "Next", FindNext);
+            AddButton(connectionBar, "Find", FocusSearch);
             game.SelectedIndexChanged += (s, e) => { if (!loading) { DisconnectStudio(); port.Text = Profile == "gta5" ? "9615" : "9616"; RefreshProfile(); } };
             find.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) { FindNext(); e.SuppressKeyPress = true; } };
 
-            var left = new UiSplit { Dock = DockStyle.Fill, SplitterPosition = 230, Panel1MinSize = 150 };
-            var right = new UiSplit { Dock = DockStyle.Fill, FixedPanel = FixedPanel.Panel2, SplitterPosition = 300, Panel2MinSize = 220 };
-            var center = new UiSplit { Dock = DockStyle.Fill, Orientation = Orientation.Horizontal, FixedPanel = FixedPanel.Panel2, SplitterPosition = 200, Panel2MinSize = 130 };
-            project.OptionsView.ShowColumns = false; project.OptionsView.ShowIndicator = false;
-            project.OptionsBehavior.Editable = false; project.Columns.AddVisible("File");
-            project.DoubleClick += (s, e) => { var path = project.FocusedNode?.Tag as string; if (path != null) OpenPath(path); };
-            left.Panel1.Controls.Add(Group("PROJECT · LUA FILES", project));
-            left.Panel2.Controls.Add(right); right.Panel1.Controls.Add(center); right.Panel2.Controls.Add(Group("LUMA API · F1 / CTRL+SPACE", help));
-            center.Panel1.Controls.Add(documents);
-            var output = new XtraTabControl { Dock = DockStyle.Fill };
-            output.TabPages.Add(new XtraTabPage { Text = "Diagnostics", Controls = { diagnostics } });
-            output.TabPages.Add(new XtraTabPage { Text = "Console · runtime logs", Controls = { console } });
-            center.Panel2.Controls.Add(output);
-            help.Properties.ReadOnly = true; console.Properties.ReadOnly = true;
-            help.Properties.WordWrap = true; console.Properties.WordWrap = false;
-            var footer = new UiPanel { Dock = DockStyle.Bottom, Height = 36 }; footer.Controls.Add(status);
-            var top = new TableLayoutPanel { Dock = DockStyle.Top, Height = 100, ColumnCount = 1, RowCount = 2 };
+            var workspace = BuildReferenceWorkspace();
+            var footer = BuildReferenceFooter();
+            var top = new TableLayoutPanel { Dock = DockStyle.Top, Height = 84, ColumnCount = 1, RowCount = 2, BackColor = StudioColors.Sidebar, Padding = new Padding(0) };
             top.RowStyles.Add(new RowStyle(SizeType.Percent, 50)); top.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
             top.Controls.Add(fileBar, 0, 0); top.Controls.Add(connectionBar, 0, 1);
-            Controls.Add(left); Controls.Add(footer); Controls.Add(top);
-            status.Text = "Offline · Check is local. Execute, Upload and Reload are separate actions.";
+            Controls.Add(workspace); Controls.Add(footer); Controls.Add(top);
+            ApplyReferenceChrome();
+            status.Text = "Ready · offline";
         }
-        private static FlowLayoutPanel Bar() => new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false, AutoScroll = true, Padding = new Padding(3) };
-        private static GroupControl Group(string title, Control child) { var group = new GroupControl { Text = title, Dock = DockStyle.Fill }; group.Controls.Add(child); return group; }
+        private static FlowLayoutPanel Bar() => new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false, AutoScroll = true, Margin = Padding.Empty, Padding = new Padding(5, 1, 5, 0), BackColor = StudioColors.Sidebar };
         private void AddButton(Control bar, string name, Action action)
-        { var button = new UiButton { Text = name, AutoSize = true, Height = 32 }; button.Click += (s, e) => { if (!closing) action(); }; commands.Add(name, button); bar.Controls.Add(button); }
+        { var button = new StudioButton { Text = name, AutoSize = true, Height = 30, AccessibleName = name }; button.Click += (s, e) => { if (!closing) action(); }; commands.Add(name, button); bar.Controls.Add(button); }
         private void UpdateCommands()
         {
             bool editor = ActiveBuffer != null;
-            foreach (string name in new[] { "Save", "Save as", "Check", "Next" }) commands[name].Enabled = editor;
+            foreach (string name in new[] { "Save", "Save as", "Check", "Next", "Find" }) commands[name].Enabled = editor;
             foreach (string name in new[] { "Execute", "Upload", "Reload" }) commands[name].Enabled = connection.Connected && !busy && (name == "Reload" || editor);
             commands["Connect"].Enabled = !busy && !connection.Connected;
             commands["Disconnect"].Enabled = busy || connection.Connected;
@@ -149,7 +135,8 @@ namespace PS4Manager.App
             if (keyData == (Keys.Control | Keys.S)) { SaveDocument(ActiveBuffer, false); return true; }
             if (keyData == (Keys.Control | Keys.N)) { AddDocument(new StudioDocument("untitled.lua")); return true; }
             if (keyData == (Keys.Control | Keys.O)) { OpenFiles(); return true; }
-            if (keyData == (Keys.Control | Keys.F)) { find.Focus(); find.SelectAll(); return true; }
+            if (keyData == (Keys.Control | Keys.F)) { FocusSearch(); return true; }
+            if (keyData == (Keys.Control | Keys.Shift | Keys.O)) { OpenProject(); return true; }
             if (keyData == (Keys.Control | Keys.W) && ActiveBuffer != null) { TryCloseDocument(ActiveDocument.Id, ConfirmClose); return true; }
             if (keyData == Keys.F5) { _ = CheckDocumentAsync(); return true; }
             return base.ProcessCmdKey(ref msg, keyData);

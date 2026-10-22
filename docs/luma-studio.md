@@ -30,6 +30,12 @@ digits, underscore, dash and dots; no directories or traversal.
 
 ## Editor
 
+The workstation layout keeps the project explorer on the left and the code editor
+wide. Output, Problems, Live diagnostics, Search, Navigation and API help live in
+the bottom tool strip. The Studio has its own dark reference palette without
+changing the dashboard's light/dark preference. The footer shows line/column,
+encoding and current syntax status.
+
 - Ctrl+N / Ctrl+O: new/open; Ctrl+S: save; Ctrl+W: close tab.
 - Ctrl+F / Enter or Next: find; F5: local syntax check (not Execute).
 - Ctrl+Space: API completion; `(`: signature; F1: symbol documentation.

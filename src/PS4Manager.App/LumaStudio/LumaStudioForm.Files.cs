@@ -33,6 +33,7 @@ namespace PS4Manager.App
                 if (dialog.ShowDialog(this) != DialogResult.OK) return;
                 try {
                     projectRoot = Path.GetFullPath(dialog.SelectedPath);
+                    projectTitle.Text = Path.GetFileName(projectRoot).ToUpperInvariant();
                     var files = StudioProject.Files(projectRoot); project.BeginUpdate();
                     try {
                         project.Nodes.Clear();
@@ -72,6 +73,7 @@ namespace PS4Manager.App
                     buffer.Document.Save(path, true);
                 }
                 buffer.Page.Text = buffer.Document.Title; buffer.Page.Tooltip = buffer.Document.FilePath;
+                RefreshEditorChrome();
                 status.Text = "Saved " + path; return true;
             } catch (Exception ex) { status.Text = "Save failed: " + ex.Message; return false; }
         }
@@ -85,7 +87,7 @@ namespace PS4Manager.App
                 var decision = confirm(buffer.Document);
                 if (decision == DialogResult.Cancel || decision == DialogResult.Yes && !SaveDocument(buffer, false)) return false;
             }
-            buffers.Remove(id); documents.TabPages.Remove(buffer.Page); buffer.Page.Dispose(); ShowDiagnostics(); UpdateCommands(); return true;
+            buffers.Remove(id); documents.TabPages.Remove(buffer.Page); buffer.Page.Dispose(); ShowDiagnostics(); RefreshEditorChrome(); UpdateCommands(); return true;
         }
         internal bool ApproveClosing()
         {
@@ -113,7 +115,7 @@ namespace PS4Manager.App
         }
         protected override void Dispose(bool disposing)
         {
-            if (disposing) { StopStudio(); checkTimer.Dispose(); pollTimer.Dispose(); lifetime.Dispose(); }
+            if (disposing) { StopStudio(); checkTimer.Dispose(); pollTimer.Dispose(); lifetime.Dispose(); documentGlyph.Dispose(); }
             base.Dispose(disposing);
         }
     }

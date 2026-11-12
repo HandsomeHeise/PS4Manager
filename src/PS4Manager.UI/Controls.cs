@@ -10,11 +10,20 @@ namespace PS4Manager.UI
 {
     public static class AppTheme
     {
-        public const string Dark = "Office 2019 Black";
-        public const string Light = "Office 2019 Colorful";
+        public const string SkinName = "WXI";
+        // Mode identifiers, not DevExpress skin names. Settings keep their
+        // existing Dark/Light values; WXI uses one skin with two palettes.
+        public const string Dark = "Dark";
+        public const string Light = "Light";
         public static string Current {
-            get => UserLookAndFeel.Default.SkinName;
-            set => UserLookAndFeel.Default.SetSkinStyle(value);
+            get => UserLookAndFeel.Default.SkinName == SkinName
+                ? (UserLookAndFeel.Default.ActiveSvgPaletteName == "Darkness" ? Dark : Light)
+                : UserLookAndFeel.Default.SkinName;
+            set {
+                if (value == Dark || value == "Office 2019 Black") UserLookAndFeel.Default.SetSkinStyle(SkinSvgPalette.WXI.Darkness);
+                else if (value == Light || value == "Office 2019 Colorful") UserLookAndFeel.Default.SetSkinStyle(SkinSvgPalette.WXI.Default);
+                else UserLookAndFeel.Default.SetSkinStyle(value);
+            }
         }
         public static bool IsLight => Current == Light;
         public static Color Accent => Color.FromArgb(0, 112, 209);
@@ -31,10 +40,19 @@ namespace PS4Manager.UI
 
     public class AppWindow : XtraForm
     {
+        private bool layoutReady, fittingRows;
         static AppWindow() { AppearanceObject.DefaultFont = new Font("Segoe UI", 10F); }
         public AppWindow() {
             AutoScaleDimensions = new SizeF(96, 96); AutoScaleMode = AutoScaleMode.Dpi;
             Font = new Font("Segoe UI", 9F);
+        }
+        protected override void OnShown(EventArgs e) { layoutReady = true; base.OnShown(e); FitRows(); }
+        protected override void OnLayout(LayoutEventArgs e) { base.OnLayout(e); if (layoutReady) FitRows(); }
+        private void FitRows()
+        {
+            if (fittingRows || IsDisposed) return;
+            fittingRows = true;
+            try { UiLayout.FitTableRows(this); } finally { fittingRows = false; }
         }
     }
 
@@ -42,8 +60,10 @@ namespace PS4Manager.UI
     {
         public UiButton() { Size = new Size(140, 34); }
         public override Size GetPreferredSize(Size proposedSize) {
-            var size = base.GetPreferredSize(proposedSize);
-            return new Size(Math.Max(90, size.Width + 12), Math.Max(32, size.Height));
+            var size = base.GetPreferredSize(Size.Empty);
+            var text = TextRenderer.MeasureText(Text, Font);
+            return new Size(Math.Max(DpiScale.Scale(90, DeviceDpi), Math.Max(size.Width, text.Width + DpiScale.Scale(16, DeviceDpi))),
+                Math.Max(DpiScale.Scale(34, DeviceDpi), Math.Max(size.Height, text.Height + DpiScale.Scale(10, DeviceDpi))));
         }
     }
 
@@ -54,16 +74,27 @@ namespace PS4Manager.UI
 
     public class UiLabel : LabelControl
     {
-        public UiLabel() { AutoSize = true; UseMnemonic = false; }
+        public UiLabel() { AutoSize = true; UseMnemonic = false; TextAlignment = ContentAlignment.MiddleLeft; }
         public override bool AutoSize { get => AutoSizeMode != LabelAutoSizeMode.None; set => AutoSizeMode = value ? LabelAutoSizeMode.Default : LabelAutoSizeMode.None; }
         public ContentAlignment TextAlignment {
-            get => ContentAlignment.MiddleLeft;
+            get {
+                int horizontal = Appearance.TextOptions.HAlignment == HorzAlignment.Far ? 2 : Appearance.TextOptions.HAlignment == HorzAlignment.Center ? 1 : 0;
+                int vertical = Appearance.TextOptions.VAlignment == VertAlignment.Top ? 0 : Appearance.TextOptions.VAlignment == VertAlignment.Bottom ? 2 : 1;
+                return new[] { ContentAlignment.TopLeft, ContentAlignment.TopCenter, ContentAlignment.TopRight,
+                    ContentAlignment.MiddleLeft, ContentAlignment.MiddleCenter, ContentAlignment.MiddleRight,
+                    ContentAlignment.BottomLeft, ContentAlignment.BottomCenter, ContentAlignment.BottomRight }[vertical * 3 + horizontal];
+            }
             set {
                 Appearance.Options.UseTextOptions = true;
                 Appearance.TextOptions.HAlignment = value == ContentAlignment.MiddleRight || value == ContentAlignment.TopRight || value == ContentAlignment.BottomRight ? HorzAlignment.Far :
                     value == ContentAlignment.MiddleCenter || value == ContentAlignment.TopCenter || value == ContentAlignment.BottomCenter ? HorzAlignment.Center : HorzAlignment.Near;
-                Appearance.TextOptions.VAlignment = VertAlignment.Center;
+                Appearance.TextOptions.VAlignment = value == ContentAlignment.TopLeft || value == ContentAlignment.TopCenter || value == ContentAlignment.TopRight ? VertAlignment.Top :
+                    value == ContentAlignment.BottomLeft || value == ContentAlignment.BottomCenter || value == ContentAlignment.BottomRight ? VertAlignment.Bottom : VertAlignment.Center;
             }
+        }
+        protected override void OnParentChanged(EventArgs e) {
+            base.OnParentChanged(e);
+            if (Parent is TableLayoutPanel && Dock == DockStyle.None && Anchor == (AnchorStyles.Top | AnchorStyles.Left) && Appearance.TextOptions.VAlignment == VertAlignment.Center) Anchor = AnchorStyles.Left;
         }
     }
 
@@ -80,7 +111,12 @@ namespace PS4Manager.UI
         public ScrollBars ScrollBars { get => Properties.ScrollBars; set => Properties.ScrollBars = value; }
         public bool WordWrap { get => Properties.WordWrap; set => Properties.WordWrap = value; }
         public new bool AcceptsTab { get => Properties.AcceptsTab; set => Properties.AcceptsTab = value; }
-        public override Size GetPreferredSize(Size proposedSize) => new Size(Math.Max(100, proposedSize.Width), Multiline ? Math.Max(80, Height) : 32);
+        public override Size GetPreferredSize(Size proposedSize) => new Size(Math.Max(DpiScale.Scale(100, DeviceDpi), proposedSize.Width),
+            Multiline ? Math.Max(DpiScale.Scale(80, DeviceDpi), Height) : Math.Max(DpiScale.Scale(32, DeviceDpi), TextRenderer.MeasureText("Mg", Font).Height + DpiScale.Scale(12, DeviceDpi)));
+        protected override void OnParentChanged(EventArgs e) {
+            base.OnParentChanged(e);
+            if (Parent is TableLayoutPanel && Dock == DockStyle.None && Anchor == (AnchorStyles.Top | AnchorStyles.Left)) Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        }
         protected override void OnKeyPress(KeyPressEventArgs e) { if (!Multiline && (e.KeyChar == '\r' || e.KeyChar == '\n')) e.Handled = true; base.OnKeyPress(e); }
     }
 
@@ -90,7 +126,21 @@ namespace PS4Manager.UI
         public DevExpress.XtraEditors.Controls.ComboBoxItemCollection Items => Properties.Items;
     }
 
-    public class UiCheckBox : CheckEdit { }
+    public class UiCheckBox : CheckEdit
+    {
+        public override Size GetPreferredSize(Size proposedSize)
+        {
+            var native = base.GetPreferredSize(proposedSize);
+            var text = TextRenderer.MeasureText(Text ?? "", Font);
+            return new Size(Math.Max(native.Width, text.Width + DpiScale.Scale(28, DeviceDpi)),
+                Math.Max(native.Height, text.Height));
+        }
+        private void FitCaption() { if (AutoSize) Size = GetPreferredSize(Size.Empty); }
+        protected override void OnTextChanged(EventArgs e) { base.OnTextChanged(e); FitCaption(); }
+        protected override void OnFontChanged(EventArgs e) { base.OnFontChanged(e); FitCaption(); }
+        protected override void OnAutoSizeChanged(EventArgs e) { base.OnAutoSizeChanged(e); FitCaption(); }
+        protected override void OnParentChanged(EventArgs e) { base.OnParentChanged(e); FitCaption(); }
+    }
 
     public class UiTabs : XtraTabControl
     {

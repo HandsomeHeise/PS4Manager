@@ -25,8 +25,8 @@ namespace PS4Manager.App
         private readonly Frame4PacketClient _packetClient;
         private readonly ToolUiDispatcher _ui;
         private readonly ToolSessionBinding _binding;
-        private readonly UiPanel _toolbar = new UiPanel { Dock = DockStyle.Top };
-        private readonly UiButton _refresh = new UiButton { Text = "Refresh Processes", Dock = DockStyle.Left, AutoSize = true };
+        private readonly TableLayoutPanel _toolbar = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, ColumnCount = 2, RowCount = 1, Padding = new Padding(6) };
+        private readonly UiButton _refresh = new UiButton { Text = "Refresh Processes", AutoSize = true };
         private readonly UiLabel _status = new UiLabel { Text = "Not loaded.", Dock = DockStyle.Fill, AutoSize = false };
         private readonly UiSplit _split = new UiSplit
         {
@@ -100,8 +100,11 @@ namespace PS4Manager.App
             _modules.DataSource = _moduleSource;
             _modules.Selection.Changed += (s, e) => UseSelectedModule();
 
-            _toolbar.Controls.Add(_status);
-            _toolbar.Controls.Add(_refresh);
+            _toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            _toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            _toolbar.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            _toolbar.Controls.Add(_refresh, 0, 0);
+            _toolbar.Controls.Add(_status, 1, 0);
             _split.Panel1.Controls.Add(_processes);
             _split.Panel2.Controls.Add(RightPanel());
             Controls.Add(_split);
@@ -152,15 +155,15 @@ namespace PS4Manager.App
                 RowCount = 6,
                 BackColor = Color.Transparent
             };
-            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90));
-            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90));
-            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             panel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             panel.Controls.Add(new UiLabel { Text = "Process", TextAlignment = ContentAlignment.MiddleLeft }, 0, 0);
@@ -182,7 +185,18 @@ namespace PS4Manager.App
             panel.Controls.Add(_unload, 2, 4);
             panel.Controls.Add(_modules, 0, 5);
             panel.SetColumnSpan(_modules, 4);
-            return panel;
+            UiLayout.SizeCommandColumns(panel);
+            var host = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
+            panel.Dock = DockStyle.None;
+            host.Controls.Add(panel);
+            host.Layout += (s, e) =>
+            {
+                var rowHeight = panel.Controls.Cast<Control>().Where(c => c != _modules)
+                    .Max(c => c.GetPreferredSize(Size.Empty).Height + c.Margin.Vertical);
+                panel.Size = new Size(Math.Max(host.ClientSize.Width, (int)Math.Ceiling(DpiScale.Scale(580, DeviceDpi) * Font.Size / 10)),
+                    Math.Max(host.ClientSize.Height, rowHeight * 5 + 100));
+            };
+            return host;
         }
 
         private void BrowseLocalPrx()

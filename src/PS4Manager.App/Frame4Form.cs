@@ -22,9 +22,9 @@ namespace PS4Manager.App
         private readonly Frame4UartClient _uartClient;
         private readonly ToolUiDispatcher _ui;
 
-        private readonly UiPanel _toolbar = new UiPanel { Dock = DockStyle.Top };
-        private readonly UiButton _refresh = new UiButton { Text = "Refresh", Dock = DockStyle.Left, AutoSize = true };
-        private readonly UiButton _loadDetails = new UiButton { Text = "Load Details", Dock = DockStyle.Left, AutoSize = true };
+        private readonly TableLayoutPanel _toolbar = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, ColumnCount = 3, RowCount = 1, Padding = new Padding(6) };
+        private readonly UiButton _refresh = new UiButton { Text = "Refresh", AutoSize = true };
+        private readonly UiButton _loadDetails = new UiButton { Text = "Load Details", AutoSize = true };
         private readonly UiLabel _status = new UiLabel { Text = "Not loaded.", Dock = DockStyle.Fill, AutoSize = false };
 
         private readonly UiSplit _split = new UiSplit
@@ -177,9 +177,13 @@ namespace PS4Manager.App
             _tabs.AddTab("Notify", NotifyPanel());
             _tabs.AddTab("Expert", ExpertPanel());
 
-            _toolbar.Controls.Add(_status);
-            _toolbar.Controls.Add(_loadDetails);
-            _toolbar.Controls.Add(_refresh);
+            _toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            _toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            _toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            _toolbar.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            _toolbar.Controls.Add(_refresh, 0, 0);
+            _toolbar.Controls.Add(_loadDetails, 1, 0);
+            _toolbar.Controls.Add(_status, 2, 0);
 
             _split.Panel1.Controls.Add(_processes);
             _split.Panel2.Controls.Add(_tabs);
@@ -228,14 +232,14 @@ namespace PS4Manager.App
             panel.Controls.Add(_address, 1, 0);
             panel.Controls.Add(new UiLabel { Text = "Length", TextAlignment = ContentAlignment.MiddleLeft }, 2, 0);
             panel.Controls.Add(_length, 3, 0);
-            var buttons = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight };
+            var buttons = new FlowLayoutPanel { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = false, Anchor = AnchorStyles.Left, FlowDirection = FlowDirection.LeftToRight };
             buttons.Controls.Add(_previous);
             buttons.Controls.Add(_read);
             buttons.Controls.Add(_next);
             panel.Controls.Add(buttons, 4, 0);
             panel.Controls.Add(_memory, 0, 1);
             panel.SetColumnSpan(_memory, 5);
-            return panel;
+            return CommandPanel(panel, 640);
         }
 
         private Control SearchPanel()
@@ -260,7 +264,7 @@ namespace PS4Manager.App
             panel.Controls.Add(_findAob, 3, 0);
             panel.Controls.Add(_aobResult, 0, 1);
             panel.SetColumnSpan(_aobResult, 4);
-            return panel;
+            return CommandPanel(panel, 560);
         }
 
         private Control ConsolePanel()
@@ -281,7 +285,7 @@ namespace PS4Manager.App
             panel.Controls.Add(new UiLabel { Text = "Socket 2811", TextAlignment = ContentAlignment.MiddleLeft }, 1, 0);
             panel.Controls.Add(_consoleInfo, 0, 1);
             panel.SetColumnSpan(_consoleInfo, 2);
-            return panel;
+            return CommandPanel(panel, 420);
         }
 
         private Control PrxPanel()
@@ -302,7 +306,7 @@ namespace PS4Manager.App
             panel.Controls.Add(new UiLabel { Text = "Selected process modules", TextAlignment = ContentAlignment.MiddleLeft }, 1, 0);
             panel.Controls.Add(_prxModules, 0, 1);
             panel.SetColumnSpan(_prxModules, 2);
-            return panel;
+            return CommandPanel(panel, 420);
         }
 
 
@@ -328,7 +332,7 @@ namespace PS4Manager.App
             panel.Controls.Add(new UiLabel { Text = "UART " + _settings.Frame4.UartPort, TextAlignment = ContentAlignment.MiddleLeft }, 3, 0);
             panel.Controls.Add(_uartLog, 0, 1);
             panel.SetColumnSpan(_uartLog, 4);
-            return panel;
+            return CommandPanel(panel, 480);
         }
 
         private void StartLog()
@@ -420,7 +424,7 @@ namespace PS4Manager.App
             panel.Controls.Add(new UiLabel { Text = "Message", TextAlignment = ContentAlignment.MiddleLeft }, 2, 0);
             panel.Controls.Add(_notifyMessage, 3, 0);
             panel.Controls.Add(_notify, 4, 0);
-            return panel;
+            return CommandPanel(panel, 540);
         }
 
         private Control ExpertPanel()
@@ -428,80 +432,99 @@ namespace PS4Manager.App
             var panel = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 6,
-                RowCount = 9,
+                ColumnCount = 5,
+                RowCount = 10,
                 BackColor = Color.Transparent
             };
-            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80));
-            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40));
-            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70));
-            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30));
-            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30));
-            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70));
-            panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            for (var row = 0; row < 9; row++) panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             panel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             panel.Controls.Add(new UiLabel { Text = "Address", TextAlignment = ContentAlignment.MiddleLeft }, 0, 0);
             panel.Controls.Add(_writeAddress, 1, 0);
             panel.Controls.Add(new UiLabel { Text = "Bytes", TextAlignment = ContentAlignment.MiddleLeft }, 2, 0);
             panel.Controls.Add(_writeBytes, 3, 0);
-            panel.Controls.Add(_writeMemory, 5, 0);
+            panel.Controls.Add(_writeMemory, 4, 0);
 
             panel.Controls.Add(new UiLabel { Text = "Length", TextAlignment = ContentAlignment.MiddleLeft }, 0, 1);
             panel.Controls.Add(_allocLength, 1, 1);
-            panel.Controls.Add(_allocate, 5, 1);
+            panel.Controls.Add(_allocate, 4, 1);
 
             panel.Controls.Add(new UiLabel { Text = "Free Addr", TextAlignment = ContentAlignment.MiddleLeft }, 0, 2);
             panel.Controls.Add(_freeAddress, 1, 2);
             panel.Controls.Add(new UiLabel { Text = "Length", TextAlignment = ContentAlignment.MiddleLeft }, 2, 2);
             panel.Controls.Add(_freeLength, 3, 2);
-            panel.Controls.Add(_free, 5, 2);
+            panel.Controls.Add(_free, 4, 2);
 
             panel.Controls.Add(new UiLabel { Text = "Process", TextAlignment = ContentAlignment.MiddleLeft }, 0, 3);
             panel.Controls.Add(_prxProcessName, 1, 3);
             panel.Controls.Add(new UiLabel { Text = "PRX Path", TextAlignment = ContentAlignment.MiddleLeft }, 2, 3);
             panel.Controls.Add(_prxPath, 3, 3);
-            panel.SetColumnSpan(_prxPath, 2);
-            panel.Controls.Add(_loadPrxModule, 5, 3);
+            panel.Controls.Add(_loadPrxModule, 4, 3);
 
             panel.Controls.Add(new UiLabel { Text = "Handle", TextAlignment = ContentAlignment.MiddleLeft }, 0, 4);
             panel.Controls.Add(_prxHandle, 1, 4);
-            panel.Controls.Add(_unloadPrxModule, 5, 4);
+            panel.Controls.Add(_unloadPrxModule, 4, 4);
 
             panel.Controls.Add(new UiLabel { Text = "RPC Stub", TextAlignment = ContentAlignment.MiddleLeft }, 0, 5);
             panel.Controls.Add(_rpcStub, 1, 5);
             panel.Controls.Add(new UiLabel { Text = "RIP", TextAlignment = ContentAlignment.MiddleLeft }, 2, 5);
             panel.Controls.Add(_rpcRip, 3, 5);
-            panel.Controls.Add(_callRpc, 5, 5);
+            panel.Controls.Add(_callRpc, 4, 5);
 
-            panel.Controls.Add(new UiLabel { Text = "RDI/RSI", TextAlignment = ContentAlignment.MiddleLeft }, 0, 6);
+            panel.Controls.Add(new UiLabel { Text = "RDI", TextAlignment = ContentAlignment.MiddleLeft }, 0, 6);
             panel.Controls.Add(_rpcRdi, 1, 6);
-            panel.Controls.Add(_rpcRsi, 2, 6);
-            panel.Controls.Add(new UiLabel { Text = "RDX/RCX", TextAlignment = ContentAlignment.MiddleLeft }, 3, 6);
-            panel.Controls.Add(_rpcRdx, 4, 6);
-            panel.Controls.Add(_rpcRcx, 5, 6);
+            panel.Controls.Add(new UiLabel { Text = "RSI", TextAlignment = ContentAlignment.MiddleLeft }, 2, 6);
+            panel.Controls.Add(_rpcRsi, 3, 6);
 
-            panel.Controls.Add(new UiLabel { Text = "R8/R9", TextAlignment = ContentAlignment.MiddleLeft }, 0, 7);
-            panel.Controls.Add(_rpcR8, 1, 7);
-            panel.Controls.Add(_rpcR9, 2, 7);
+            panel.Controls.Add(new UiLabel { Text = "RDX", TextAlignment = ContentAlignment.MiddleLeft }, 0, 7);
+            panel.Controls.Add(_rpcRdx, 1, 7);
+            panel.Controls.Add(new UiLabel { Text = "RCX", TextAlignment = ContentAlignment.MiddleLeft }, 2, 7);
+            panel.Controls.Add(_rpcRcx, 3, 7);
 
-            panel.Controls.Add(_expertOutput, 0, 8);
-            panel.SetColumnSpan(_expertOutput, 6);
-            return panel;
+            panel.Controls.Add(new UiLabel { Text = "R8", TextAlignment = ContentAlignment.MiddleLeft }, 0, 8);
+            panel.Controls.Add(_rpcR8, 1, 8);
+            panel.Controls.Add(new UiLabel { Text = "R9", TextAlignment = ContentAlignment.MiddleLeft }, 2, 8);
+            panel.Controls.Add(_rpcR9, 3, 8);
+
+            panel.Controls.Add(_expertOutput, 0, 9);
+            panel.SetColumnSpan(_expertOutput, 5);
+            return CommandPanel(panel, 640);
+        }
+
+        private Control CommandPanel(TableLayoutPanel panel, int minimumWidth)
+        {
+            // Command cells follow skin/font metrics; only the output row consumes remaining space.
+            foreach (RowStyle row in panel.RowStyles)
+                if (row.SizeType == SizeType.Absolute) row.SizeType = SizeType.AutoSize;
+            foreach (ColumnStyle column in panel.ColumnStyles)
+                if (column.SizeType == SizeType.Absolute) column.SizeType = SizeType.AutoSize;
+            UiLayout.SizeCommandColumns(panel);
+            panel.Dock = DockStyle.None;
+            var host = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
+            host.Controls.Add(panel);
+            host.Layout += (s, e) =>
+            {
+                var minimumHeight = 0;
+                for (var row = 0; row < panel.RowCount; row++)
+                {
+                    if (panel.RowStyles[row].SizeType == SizeType.Percent) { minimumHeight += 100; continue; }
+                    var children = panel.Controls.Cast<Control>().Where(c => panel.GetRow(c) == row).ToArray();
+                    minimumHeight += children.Length == 0 ? 0 : children.Max(c => c.GetPreferredSize(Size.Empty).Height + c.Margin.Vertical);
+                }
+                panel.Size = new Size(Math.Max(host.ClientSize.Width, (int)Math.Ceiling(DpiScale.Scale(minimumWidth, DeviceDpi) * Font.Size / 10)),
+                    Math.Max(host.ClientSize.Height, minimumHeight));
+            };
+            return host;
         }
 
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
-            var chrome = _toolbar.Height - _toolbar.DisplayRectangle.Height;
-            _toolbar.Height = _refresh.GetPreferredSize(Size.Empty).Height + chrome;
             _split.SplitterDistance = Math.Max(260, ClientSize.Width / 3);
             var _ = RefreshAsync();
         }

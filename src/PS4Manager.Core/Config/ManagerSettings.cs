@@ -96,6 +96,7 @@ namespace PS4Manager.Core.Config
         [DataMember] public string Game { get; set; }
         [DataMember] public int Port { get; set; }
         [DataMember] public string Token { get; set; }
+        [DataMember] public List<string> RecentProjects { get; set; }
 
         [OnDeserializing]
         private void OnDeserializing(StreamingContext context)
@@ -108,6 +109,7 @@ namespace PS4Manager.Core.Config
             Game = Gta5;
             Port = LumaEndpoint.GtaPort;
             Token = "";
+            RecentProjects = new List<string>();
         }
 
         internal void Repair()
@@ -115,6 +117,8 @@ namespace PS4Manager.Core.Config
             if (Game != Gta5 && Game != Rdr2) Game = Gta5;
             if (Port <= 0 || Port > 65535) Port = Game == Rdr2 ? LumaEndpoint.Rdr2Port : LumaEndpoint.GtaPort;
             if (Token == null) Token = "";
+            RecentProjects = (RecentProjects ?? new List<string>()).Where(p => !string.IsNullOrWhiteSpace(p) && p.Length <= 1024)
+                .Distinct(StringComparer.OrdinalIgnoreCase).Take(10).ToList();
         }
     }
 

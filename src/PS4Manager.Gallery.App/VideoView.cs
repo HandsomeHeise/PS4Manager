@@ -26,7 +26,7 @@ namespace PS4Manager.Gallery.App
             Stretch = Stretch.Uniform
         };
 
-        private readonly UiPanel _bar = new UiPanel { Dock = DockStyle.Bottom, Height = 40 };
+        private readonly UiPanel _bar = new UiToolbar { Dock = DockStyle.Bottom };
         private readonly UiButton _playPause = new UiButton { Text = "Pause", AutoSize = true };
         private readonly SeekBar _seek = new SeekBar();
         private readonly UiLabel _time = new UiLabel { Text = "0:00", AutoSize = true };
@@ -184,16 +184,17 @@ namespace PS4Manager.Gallery.App
 
         private void LayoutBar()
         {
-            const int Margin = 8;
-            _playPause.Location = new Point(Margin, (_bar.Height - _playPause.Height) / 2);
+            int margin = DpiScale.Scale(8, DeviceDpi);
+            var area = _bar.DisplayRectangle;
+            _playPause.Location = new Point(area.Left, area.Top + (area.Height - _playPause.Height) / 2);
 
             _time.Location = new Point(
-                _bar.ClientSize.Width - _time.Width - Margin,
-                (_bar.Height - _time.Height) / 2);
+                area.Right - _time.Width,
+                area.Top + (area.Height - _time.Height) / 2);
 
-            int left = _playPause.Right + Margin;
-            int right = _time.Left - Margin;
-            _seek.SetBounds(left, (_bar.Height - _seek.Height) / 2,
+            int left = _playPause.Right + margin;
+            int right = _time.Left - margin;
+            _seek.SetBounds(left, area.Top + (area.Height - _seek.Height) / 2,
                 Math.Max(1, right - left), _seek.Height);
         }
 

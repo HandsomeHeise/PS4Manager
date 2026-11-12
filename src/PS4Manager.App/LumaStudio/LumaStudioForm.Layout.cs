@@ -8,6 +8,7 @@ using DevExpress.XtraEditors;
 using DevExpress.XtraEditors.Controls;
 using DevExpress.XtraTab;
 using PS4Manager.UI;
+using PS4Manager.Core.Luma.Studio;
 
 namespace PS4Manager.App
 {
@@ -125,7 +126,7 @@ namespace PS4Manager.App
         }
         private void ApplyReferenceChrome()
         {
-            LookAndFeel.UseDefaultLookAndFeel = false; LookAndFeel.SetSkinStyle(AppTheme.Dark);
+            LookAndFeel.UseDefaultLookAndFeel = false; LookAndFeel.SetSkinStyle(AppTheme.SkinName);
             Appearance.BackColor = StudioColors.Sidebar; Appearance.Options.UseBackColor = true;
             foreach (var split in new[] { workspaceSplit, outputSplit }) {
                 split.LookAndFeel.UseDefaultLookAndFeel = false; split.LookAndFeel.Style = LookAndFeelStyle.UltraFlat;
@@ -141,25 +142,25 @@ namespace PS4Manager.App
                 button.AppearanceDisabled.ForeColor = StudioColors.Muted;
             }
             foreach (var edit in new TextEdit[] { game, templates, host, port, token, find }) {
-                edit.LookAndFeel.UseDefaultLookAndFeel = false; edit.LookAndFeel.SetSkinStyle(AppTheme.Dark);
+                edit.LookAndFeel.UseDefaultLookAndFeel = false; edit.LookAndFeel.SetSkinStyle(AppTheme.SkinName);
                 edit.Properties.BorderStyle = BorderStyles.Simple;
                 SetColors(edit.Properties.Appearance, StudioColors.Editor, StudioColors.Text);
                 edit.Properties.Appearance.BorderColor = StudioColors.Border;
                 edit.Properties.Appearance.Options.UseBorderColor = true;
             }
             foreach (var memo in new[] { console, help, liveDetails }) {
-                memo.LookAndFeel.UseDefaultLookAndFeel = false; memo.LookAndFeel.SetSkinStyle(AppTheme.Dark);
+                memo.LookAndFeel.UseDefaultLookAndFeel = false; memo.LookAndFeel.SetSkinStyle(AppTheme.SkinName);
                 memo.Properties.UseAdvancedMode = DefaultBoolean.True;
                 SetColors(memo.Properties.Appearance, StudioColors.Editor, StudioColors.Muted);
                 memo.Properties.Appearance.Font = new Font("Consolas", 10.5F);
                 memo.Properties.Appearance.Options.UseFont = true; memo.Padding = new Padding(10);
             }
             foreach (var list in new[] { diagnostics, navigation }) {
-                list.LookAndFeel.UseDefaultLookAndFeel = false; list.LookAndFeel.SetSkinStyle(AppTheme.Dark);
+                list.LookAndFeel.UseDefaultLookAndFeel = false; list.LookAndFeel.SetSkinStyle(AppTheme.SkinName);
                 SetColors(list.Appearance, StudioColors.Editor, StudioColors.Text);
                 SetColors(list.AppearanceSelected, StudioColors.Surface, StudioColors.Accent);
             }
-            project.LookAndFeel.UseDefaultLookAndFeel = false; project.LookAndFeel.SetSkinStyle(AppTheme.Dark);
+            project.LookAndFeel.UseDefaultLookAndFeel = false; project.LookAndFeel.SetSkinStyle(AppTheme.SkinName);
             SetColors(project.Appearance.Empty, StudioColors.Sidebar, StudioColors.Text);
             SetColors(project.Appearance.Row, StudioColors.Sidebar, StudioColors.Text);
             SetColors(project.Appearance.FocusedRow, StudioColors.Surface, StudioColors.Accent);
@@ -230,11 +231,12 @@ namespace PS4Manager.App
         private void UpdateLiveStatus()
         {
             var result = ActiveBuffer?.Check;
-            liveLabel.Text = ActiveBuffer == null ? "Live: no document" : result == null ? "Live: not checked" : result.Success ? "Live: no errors" : "Live: " + result.Diagnostics.Count + " problem(s)";
-            liveLabel.Appearance.ForeColor = result == null ? StudioColors.Muted : result.Success ? Color.FromArgb(126, 218, 173) : Color.FromArgb(244, 135, 113);
+            int errors = result?.Diagnostics.Count(d => d.Severity == LuaDiagnosticSeverity.Error) ?? 0, warnings = result?.Diagnostics.Count(d => d.Severity == LuaDiagnosticSeverity.Warning) ?? 0;
+            liveLabel.Text = ActiveBuffer == null ? "Live: no document" : result == null ? "Live: not checked" : "Live: " + errors + " errors, " + warnings + " hints";
+            liveLabel.Appearance.ForeColor = result == null ? StudioColors.Muted : errors > 0 ? Color.FromArgb(244, 135, 113) : warnings > 0 ? StudioColors.Number : Color.FromArgb(126, 218, 173);
             liveDetails.Text = ActiveDocument == null ? "Open a Lua file to begin." :
                 ActiveDocument.Title + "\r\n\r\n" + liveLabel.Text + "\r\nLua 5.4.7 · compile-only checks\r\n\r\n" +
-                "Syntax checks never execute code and do not verify native argument types or runtime availability.\r\n\r\n" +
+                "Native catalog/name/argument-count hints are warnings only, not full Lua type/scope analysis. Checks never execute code or verify runtime availability.\r\n\r\n" +
                 (CurrentDiagnostics.Count == 0 ? "No current diagnostic messages." : string.Join("\r\n", CurrentDiagnostics.Select(d => "Line " + d.Line + ": " + d.Message)));
         }
         private void FocusSearch() { tools.SelectedTabPage = searchPage; find.Focus(); find.SelectAll(); }

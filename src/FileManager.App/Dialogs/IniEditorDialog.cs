@@ -16,7 +16,7 @@ namespace FileManager.App.Dialogs
     public sealed class IniEditorDialog : AppForm
     {
         private readonly MultilineEditBox _editor = new MultilineEditBox();
-        private readonly UiLabel _status = new UiLabel { AutoSize = true };
+        private readonly UiLabel _status = new UiLabel { AutoSize = false };
         private readonly UiButton _save = new UiButton { Text = "Save" };
         private readonly UiButton _saveClose = new UiButton { Text = "Save and close" };
         private readonly UiButton _cancel = new UiButton { Text = "Cancel" };
@@ -36,6 +36,9 @@ namespace FileManager.App.Dialogs
             MinimumSize = new Size(520, 320);
             _saveText = saveText;
             _lineEnding = DetectLineEnding(text ?? "");
+            _status.Appearance.TextOptions.WordWrap = DevExpress.Utils.WordWrap.NoWrap;
+            _status.Appearance.TextOptions.Trimming = DevExpress.Utils.Trimming.EllipsisCharacter;
+            _status.TextChanged += (s, e) => _status.ToolTip = _status.Text;
 
             _editor.Multiline = true;
             _editor.ReadOnly = false;
@@ -49,11 +52,12 @@ namespace FileManager.App.Dialogs
             _saveClose.Click += async (s, e) => await SaveAsync(true);
             _cancel.Click += (s, e) => DialogResult = DialogResult.Cancel;
 
-            var buttons = new UiPanel { Dock = DockStyle.Bottom, Height = 40 };
+            var buttons = new UiToolbar { Dock = DockStyle.Bottom };
             buttons.Controls.Add(_cancel);
             buttons.Controls.Add(_saveClose);
             buttons.Controls.Add(_save);
             buttons.Controls.Add(_status);
+            buttons.Layout += (s, e) => LayoutButtons();
 
             var body = new UiPanel { Dock = DockStyle.Fill, Padding = new Padding(12) };
             body.Controls.Add(_editor);
@@ -95,8 +99,9 @@ namespace FileManager.App.Dialogs
         {
             if (!IsHandleCreated) return;
             int gap = Px(8);
-            int right = ClientSize.Width - Px(12);
-            int y = Px(8);
+            var area = _cancel.Parent.DisplayRectangle;
+            int right = area.Right;
+            int y = area.Top;
             _cancel.Size = _cancel.GetPreferredSize(Size.Empty);
             _saveClose.Size = _saveClose.GetPreferredSize(Size.Empty);
             _save.Size = _save.GetPreferredSize(Size.Empty);
@@ -105,7 +110,7 @@ namespace FileManager.App.Dialogs
             _saveClose.Location = new Point(right - _saveClose.Width, y);
             right = _saveClose.Left - gap;
             _save.Location = new Point(right - _save.Width, y);
-            _status.Location = new Point(Px(12), y + Px(4));
+            _status.SetBounds(area.Left, area.Top, Math.Max(1, _save.Left - gap - area.Left), area.Height);
         }
 
         private async Task SaveAsync(bool closeAfter)

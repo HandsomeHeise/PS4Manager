@@ -27,7 +27,7 @@ namespace PS4Manager.Core.Tests.Presentation
                     form.ClientSize = new Size(width, height); form.Show(); Application.DoEvents();
                     Assert.True(form.ActiveEditor.Width > form.ClientSize.Width * .70, "API help must not consume a permanent right column: editor=" + form.ActiveEditor.Width + ", client=" + form.ClientSize.Width);
                     var tools = All(form).OfType<XtraTabControl>().Single(t => t.Name == "studio.tools");
-                    Assert.Equal(new[] { "OUTPUT", "PROBLEMS", "LIVE DIAGNOSTICS", "SEARCH", "NAVIGATION", "API" }, tools.TabPages.Select(p => p.Text));
+                    Assert.Equal(new[] { "OUTPUT", "PROBLEMS", "LIVE DIAGNOSTICS", "SEARCH", "NAVIGATION", "API", "PROJECT SYNC" }, tools.TabPages.Select(p => p.Text));
                     Assert.Equal("OUTPUT", tools.SelectedTabPage.Text);
                     Assert.True(tools.PointToScreen(Point.Empty).Y >= form.ActiveEditor.PointToScreen(Point.Empty).Y + form.ActiveEditor.Height);
                     Assert.Contains("Execute", form.CommandNames); Assert.Contains("Upload", form.CommandNames); Assert.Contains("Reload", form.CommandNames);

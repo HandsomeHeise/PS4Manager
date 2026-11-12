@@ -29,9 +29,9 @@ namespace PS4Manager.App
         private readonly UiButton _upload = ToolbarButton("Upload PKG");
         private readonly UiButton _download = ToolbarButton("Download");
         private readonly UiButton _delete = ToolbarButton("Delete");
-        private readonly UiLabel _targetLabel = new UiLabel { Text = "Target", Dock = DockStyle.Left, AutoSize = false, Width = 52 };
-        private readonly ComboBox _target = new ComboBox { Dock = DockStyle.Left, DropDownStyle = ComboBoxStyle.DropDownList, Width = 130 };
-        private readonly UiLabel _status = new UiLabel { Dock = DockStyle.Fill, AutoSize = false };
+        private readonly UiLabel _targetLabel = new UiLabel { Text = "Target", Anchor = AnchorStyles.Left };
+        private readonly ComboBox _target = new ComboBox { Anchor = AnchorStyles.Left, DropDownStyle = ComboBoxStyle.DropDownList, Width = 130 };
+        private readonly UiLabel _status = new UiLabel { Anchor = AnchorStyles.Left };
         private readonly AppGrid _grid = new AppGrid { Dock = DockStyle.Fill };
         private readonly List<PackageRow> _rows = new List<PackageRow>();
         private readonly ListDataSource<PackageRow> _source;
@@ -60,7 +60,6 @@ namespace PS4Manager.App
             ClientSize = new Size(920, 500);
             MinimumSize = new Size(680, 360);
             StartPosition = FormStartPosition.CenterParent;
-            _toolbar.Height = 34;
             _status.TextAlignment = ContentAlignment.MiddleLeft;
             _targetLabel.TextAlignment = ContentAlignment.MiddleRight;
 
@@ -76,13 +75,22 @@ namespace PS4Manager.App
             _grid.DataSource = _source;
             _grid.Selection.Changed += (s, e) => UpdateButtons();
 
-            _toolbar.Controls.Add(_status);
-            _toolbar.Controls.Add(_delete);
-            _toolbar.Controls.Add(_download);
-            _toolbar.Controls.Add(_upload);
-            _toolbar.Controls.Add(_target);
-            _toolbar.Controls.Add(_targetLabel);
-            _toolbar.Controls.Add(_refresh);
+            var commands = new FlowLayoutPanel {
+                Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                WrapContents = true, Margin = Padding.Empty
+            };
+            var target = new TableLayoutPanel { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, ColumnCount = 2, RowCount = 1, Margin = Padding.Empty };
+            target.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            target.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            target.Controls.Add(_targetLabel, 0, 0);
+            target.Controls.Add(_target, 1, 0);
+            commands.Controls.AddRange(new Control[] { _refresh, target, _upload, _download, _delete, _status });
+            _toolbar.Controls.Add(commands);
+            _toolbar.Layout += (s, e) => {
+                int chrome = _toolbar.Height - _toolbar.DisplayRectangle.Height;
+                int height = commands.GetPreferredSize(new Size(_toolbar.DisplayRectangle.Width, 0)).Height + chrome;
+                if (_toolbar.Height != height) _toolbar.Height = height;
+            };
             Controls.Add(_grid);
             Controls.Add(_toolbar);
 
@@ -97,9 +105,8 @@ namespace PS4Manager.App
             return new UiButton
             {
                 Text = text,
-                Dock = DockStyle.Left,
-                AutoSize = false,
-                Width = string.Equals(text, "Upload PKG", StringComparison.Ordinal) ? 92 : 78
+                AutoSize = true,
+                Anchor = AnchorStyles.Left
             };
         }
 

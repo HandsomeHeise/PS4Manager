@@ -7,19 +7,24 @@ using System.Text.RegularExpressions;
 
 namespace PS4Manager.Core.Luma.Studio
 {
+    public enum LuaDiagnosticSeverity { Error, Warning }
     public sealed class LuaDiagnostic
     {
-        public LuaDiagnostic(string filePath, int line, string message) { FilePath = filePath; Line = Math.Max(1, line); Message = message; }
+        public LuaDiagnostic(string filePath, int line, string message, LuaDiagnosticSeverity severity = LuaDiagnosticSeverity.Error, int start = -1, int length = 1)
+        { FilePath = filePath; Line = Math.Max(1, line); Message = message; Severity = severity; Start = start; Length = Math.Max(1, length); }
         public string FilePath { get; }
         public int Line { get; }
         public string Message { get; }
+        public LuaDiagnosticSeverity Severity { get; }
+        public int Start { get; }
+        public int Length { get; }
         public override string ToString() => FilePath + ":" + Line + ": " + Message;
     }
     public sealed class LuaCheckResult
     {
         public LuaCheckResult(bool available, IEnumerable<LuaDiagnostic> diagnostics) { Available = available; Diagnostics = diagnostics.ToArray(); }
         public bool Available { get; }
-        public bool Success => Available && Diagnostics.Count == 0;
+        public bool Success => Available && !Diagnostics.Any(d => d.Severity == LuaDiagnosticSeverity.Error);
         public IReadOnlyList<LuaDiagnostic> Diagnostics { get; }
     }
     public interface ILuaSyntaxChecker { LuaCheckResult Check(string source, string fileName); }

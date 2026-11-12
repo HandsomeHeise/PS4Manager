@@ -37,7 +37,7 @@ namespace PS4Manager.App
         private readonly ToolUiDispatcher _ui;
         private readonly ToolSessionBinding _binding;
 
-        private readonly UiPanel _toolbar = new UiPanel { Dock = DockStyle.Top };
+        private readonly UiPanel _toolbar = new UiToolbar { Dock = DockStyle.Top };
         private readonly UiLabel _status = new UiLabel
             { Text = "Nicht verbunden.", AutoSize = false, Dock = DockStyle.Fill };
         private readonly UiButton _refresh = new UiButton

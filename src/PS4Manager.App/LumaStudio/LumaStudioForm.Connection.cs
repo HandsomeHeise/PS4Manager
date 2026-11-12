@@ -38,6 +38,7 @@ namespace PS4Manager.App
         private void DisconnectStudio()
         {
             ++remoteRevision; pollTimer.Stop(); connection.Disconnect(); busy = false;
+            InvalidateProjectPreview();
             execution = null; logLines.Clear(); console.Text = "";
             status.Text = "Disconnected · no scripts were changed."; UpdateCommands();
         }

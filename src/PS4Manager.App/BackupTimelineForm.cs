@@ -23,7 +23,7 @@ namespace PS4Manager.App
         private readonly string _root;
         private readonly ToolUiDispatcher _ui;
         private readonly ToolSessionBinding _binding;
-        private readonly UiPanel _toolbar = new UiPanel { Dock = DockStyle.Top };
+        private readonly UiPanel _toolbar = new UiToolbar { Dock = DockStyle.Top };
         private readonly UiButton _refresh = new UiButton { Text = "Refresh", Dock = DockStyle.Left, AutoSize = true };
         private readonly UiButton _restore = new UiButton { Text = "Restore", Dock = DockStyle.Left, AutoSize = true };
         private readonly UiLabel _status = new UiLabel { Dock = DockStyle.Fill, AutoSize = false };

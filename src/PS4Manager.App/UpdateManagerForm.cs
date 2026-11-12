@@ -17,8 +17,8 @@ namespace PS4Manager.App
         private readonly Action _saveSettings;
         private readonly UpdateService _service;
         private readonly UiPanel _toolbar = new UiPanel { Dock = DockStyle.Top };
-        private readonly UiButton _check = new UiButton { Text = "Check", Dock = DockStyle.Left, AutoSize = false, Width = 76 };
-        private readonly UiButton _install = new UiButton { Text = "Download + Install", Dock = DockStyle.Left, AutoSize = false, Width = 136 };
+        private readonly UiButton _check = new UiButton { Text = "Check", AutoSize = true, Anchor = AnchorStyles.Left };
+        private readonly UiButton _install = new UiButton { Text = "Download + Install", AutoSize = true, Anchor = AnchorStyles.Left };
         private readonly UiLabel _status = new UiLabel { Dock = DockStyle.Fill, AutoSize = false };
         private readonly UiTextBox _manifestUrl = new UiTextBox();
         private readonly ComboBox _channel = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
@@ -52,21 +52,33 @@ namespace PS4Manager.App
             WindowIcon.Apply(this);
 
             _status.TextAlignment = ContentAlignment.MiddleLeft;
-            _toolbar.Height = 34;
-            _toolbar.Controls.Add(_status);
-            _toolbar.Controls.Add(_install);
-            _toolbar.Controls.Add(_check);
+            var commands = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, ColumnCount = 3, RowCount = 1, Margin = Padding.Empty };
+            commands.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            commands.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            commands.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            commands.Controls.Add(_check, 0, 0);
+            commands.Controls.Add(_install, 1, 0);
+            commands.Controls.Add(_status, 2, 0);
+            _toolbar.Controls.Add(commands);
+            FitPanelToContent(_toolbar, commands);
 
             _channel.Items.Add("stable");
             _channel.Items.Add("preview");
 
-            _settingsPanel.Height = 76;
-            _settingsPanel.Controls.Add(new UiLabel { Text = "Manifest URL", Location = new Point(12, 12), AutoSize = true });
-            _settingsPanel.Controls.Add(new UiLabel { Text = "Channel", Location = new Point(12, 44), AutoSize = true });
-            _settingsPanel.Controls.Add(_manifestUrl);
-            _settingsPanel.Controls.Add(_channel);
-            _manifestUrl.SetBounds(110, 8, 570, 26);
-            _channel.SetBounds(110, 40, 140, 26);
+            var fields = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, ColumnCount = 2, RowCount = 2, Margin = Padding.Empty };
+            fields.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            fields.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            fields.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            fields.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            fields.Controls.Add(new UiLabel { Text = "Manifest URL", Anchor = AnchorStyles.Left }, 0, 0);
+            fields.Controls.Add(new UiLabel { Text = "Channel", Anchor = AnchorStyles.Left }, 0, 1);
+            _manifestUrl.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+            _channel.Anchor = AnchorStyles.Left;
+            _channel.Width = 140;
+            fields.Controls.Add(_manifestUrl, 1, 0);
+            fields.Controls.Add(_channel, 1, 1);
+            _settingsPanel.Controls.Add(fields);
+            FitPanelToContent(_settingsPanel, fields);
 
             Controls.Add(_notes);
             Controls.Add(_settingsPanel);
@@ -76,6 +88,16 @@ namespace PS4Manager.App
             _install.Click += async (s, e) => await InstallAsync();
             _manifestUrl.TextChanged += (s, e) => StoreSettings();
             _channel.SelectedIndexChanged += (s, e) => StoreSettings();
+        }
+
+        private static void FitPanelToContent(UiPanel panel, Control content)
+        {
+            // WXI adds its own border in addition to the panel's padding.
+            panel.Layout += (s, e) => {
+                int chrome = panel.Height - panel.DisplayRectangle.Height;
+                int height = content.GetPreferredSize(new Size(panel.DisplayRectangle.Width, 0)).Height + chrome;
+                if (panel.Height != height) panel.Height = height;
+            };
         }
 
         private void LoadSettings()

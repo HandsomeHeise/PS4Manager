@@ -83,12 +83,12 @@ namespace PS4Manager.Gallery.App
             // Nur noch die Werkzeugleiste des Werkzeugfensters: Verbunden und
             // getrennt wird im Dashboard, hier gibt es nur Aktualisieren und die
             // Statuszeile.
-            var toolbar = new UiPanel { Dock = DockStyle.Top, Height = 44 };
-            _refresh.Location = new Point(8, 8);
-            _status.Location = new Point(118, 12);
-            _status.AutoSize = true;
-            toolbar.Controls.Add(_refresh);
+            var toolbar = new UiToolbar { Dock = DockStyle.Top };
+            _refresh.Dock = DockStyle.Left;
+            _status.AutoSize = false;
+            _status.Dock = DockStyle.Fill;
             toolbar.Controls.Add(_status);
+            toolbar.Controls.Add(_refresh);
 
             _gallery.Gallery.ImageSize = new Size(192, 108);
             _gallery.Gallery.ItemCheckMode = ItemCheckMode.Multiple;

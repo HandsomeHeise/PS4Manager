@@ -89,6 +89,42 @@ namespace PS4Manager.Core.Luma
             return TextCommandAsync(LumaOperation.Put, payload, "PUT", ct);
         }
 
+        internal async Task<string[]> ListScriptDirectoryAsync(string relativeDirectory, CancellationToken ct)
+        {
+            if (relativeDirectory.Length != 0) Studio.StudioScriptPath.Validate(relativeDirectory + "/check.lua");
+            string target = "scripts" + (relativeDirectory.Length == 0 ? "" : "/" + relativeDirectory);
+            var reply = await RequestAsync(LumaOperation.Ls, LumaProtocol.Text(target), ct).ConfigureAwait(false);
+            if (reply.Operation == LumaOperation.Err && reply.Text == "not found") return Array.Empty<string>();
+            if (reply.Operation != LumaOperation.Ok && reply.Operation != LumaOperation.Ls) ThrowForReply("LS", reply);
+            if (reply.Payload.Length > 65536) throw new System.IO.IOException("Remote listing exceeds 64 KiB.");
+            string text = new UTF8Encoding(false, true).GetString(reply.Payload);
+            if (text.IndexOf("truncated", StringComparison.OrdinalIgnoreCase) >= 0) throw new System.IO.IOException("Remote listing is incomplete.");
+            var names = new System.Collections.Generic.HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (string name in text.Split('\n')) {
+                if (name == "" || name == "." || name == "..") continue;
+                if (!System.Text.RegularExpressions.Regex.IsMatch(name, @"\A[A-Za-z0-9][A-Za-z0-9_.-]*\z") || name.Length > 200 || !names.Add(name) || names.Count > 1000)
+                    throw new System.IO.IOException("Remote listing contains unsafe, duplicate or too many entries.");
+            }
+            return System.Linq.Enumerable.ToArray(names);
+        }
+        internal async Task<byte[]> ReadProjectScriptAsync(string path, CancellationToken ct)
+        {
+            Studio.StudioScriptPath.Validate(path);
+            var reply = await RequestAsync(LumaOperation.Get, LumaProtocol.Text("scripts/" + path), ct).ConfigureAwait(false);
+            if (reply.Operation != LumaOperation.Ok && reply.Operation != LumaOperation.Get) ThrowForReply("GET", reply);
+            if (reply.Payload.Length > Studio.LuaSyntaxChecker.MaxSourceBytes) throw new System.IO.IOException("Remote script exceeds 1 MiB.");
+            return reply.Payload;
+        }
+        internal Task<string> UploadProjectScriptAsync(string path, byte[] source, CancellationToken ct)
+        {
+            Studio.StudioScriptPath.Validate(path);
+            if (source == null || source.Length > Studio.LuaSyntaxChecker.MaxSourceBytes) throw new ArgumentException("Script exceeds 1 MiB.");
+            byte[] prefix = Encoding.UTF8.GetBytes("scripts/" + path + "\0");
+            byte[] payload = new byte[prefix.Length + source.Length];
+            Buffer.BlockCopy(prefix, 0, payload, 0, prefix.Length); Buffer.BlockCopy(source, 0, payload, prefix.Length, source.Length);
+            return TextCommandAsync(LumaOperation.Put, payload, "PUT", ct);
+        }
+
         internal static void ValidateUploadFileName(string fileName)
         {
             if (fileName == null || !System.Text.RegularExpressions.Regex.IsMatch(fileName,

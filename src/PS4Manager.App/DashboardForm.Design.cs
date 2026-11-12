@@ -16,8 +16,8 @@ namespace PS4Manager.App
         private readonly UiLabel savedConsole = new UiLabel { AutoSize = false, Dock = DockStyle.Bottom, Height = 70 };
         private readonly UiLabel dashboardStatus = new UiLabel { AutoSize = false, Dock = DockStyle.Bottom, Height = 28 };
 
-        private static UiLabel CountLabel(string text) => new UiLabel { Text = text, AutoSize = false, Dock = DockStyle.Fill, Appearance = { Font = new Font("Segoe UI Semibold", 28) } };
-        private static UiLabel HintLabel(string text) => new UiLabel { Text = text, AutoSize = false, Dock = DockStyle.Fill, Appearance = { ForeColor = Color.FromArgb(80, 181, 247) } };
+        private static UiLabel CountLabel(string text) => new UiLabel { Text = text, AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 0, 0, 4), Appearance = { Font = new Font("Segoe UI Semibold", 28) } };
+        private static UiLabel HintLabel(string text) => new UiLabel { Text = text, AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 0, 0, 8), Appearance = { ForeColor = Color.FromArgb(80, 181, 247) } };
         private static UiLabel Paragraph(string text) => new UiLabel { Text = text, AutoSize = false, Dock = DockStyle.Fill, Padding = new Padding(6), Appearance = { TextOptions = { WordWrap = DevExpress.Utils.WordWrap.Wrap, VAlignment = DevExpress.Utils.VertAlignment.Top } } };
         private static GroupControl Section(string title) => new GroupControl { Text = title, Dock = DockStyle.Fill, Padding = new Padding(12), Margin = new Padding(6), AllowHtmlText = false, AppearanceCaption = { Font = new Font("Segoe UI Semibold", 10) } };
 
@@ -26,7 +26,7 @@ namespace PS4Manager.App
             var scroll = new XtraScrollableControl { Dock = DockStyle.Fill, AutoScroll = true };
             var layout = new TableLayoutPanel { Dock = DockStyle.Top, Height = 690, ColumnCount = 1, RowCount = 3, Padding = new Padding(10), BackColor = Color.Transparent };
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 178));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 164));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 200));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             layout.Controls.Add(new DashboardBanner { Dock = DockStyle.Fill, Margin = new Padding(6, 0, 6, 8) }, 0, 0);
 
@@ -72,10 +72,10 @@ namespace PS4Manager.App
             var group = Section(title);
             var body = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 3 };
             body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 58)); body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            body.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); body.RowStyles.Add(new RowStyle(SizeType.Absolute, 24)); body.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-            var picture = new PictureEdit { Image = DashboardArtwork.Icon(icon), Dock = DockStyle.Fill, Properties = { SizeMode = DevExpress.XtraEditors.Controls.PictureSizeMode.Squeeze, BorderStyle = DevExpress.XtraEditors.Controls.BorderStyles.NoBorder, ShowMenu = false } };
+            body.RowStyles.Add(new RowStyle(SizeType.AutoSize)); body.RowStyles.Add(new RowStyle(SizeType.AutoSize)); body.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            var picture = new PictureEdit { Image = DashboardArtwork.Icon(icon), Size = new Size(40, 40), Anchor = AnchorStyles.Top | AnchorStyles.Left, Margin = Padding.Empty, Properties = { SizeMode = DevExpress.XtraEditors.Controls.PictureSizeMode.Squeeze, BorderStyle = DevExpress.XtraEditors.Controls.BorderStyles.NoBorder, ShowMenu = false } };
             body.Controls.Add(picture, 0, 0); body.SetRowSpan(picture, 2); body.Controls.Add(count, 1, 0); body.Controls.Add(hint, 1, 1);
-            var button = new UiButton { Text = action, Dock = DockStyle.Right, Width = 145 }; button.Click += (s, e) => click(); body.Controls.Add(button, 1, 2);
+            var button = new UiButton { Text = action, AutoSize = true, Anchor = AnchorStyles.Right | AnchorStyles.Bottom, Margin = Padding.Empty }; button.Click += (s, e) => click(); body.Controls.Add(button, 1, 2);
             group.Controls.Add(body); return group;
         }
         private Control Shortcut(string title, string subtitle, string key)

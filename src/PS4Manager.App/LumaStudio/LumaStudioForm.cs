@@ -24,6 +24,9 @@ namespace PS4Manager.App
             public UiLabel Breadcrumb;
             public LuaCheckResult Check;
             public long CheckedVersion = -1;
+            public long AssistanceVersion = -1;
+            public int AssistanceCaret = -1;
+            public string AssistanceProfile;
         }
         private readonly ManagerSettings settings;
         private readonly Action saveSettings;
@@ -110,10 +113,11 @@ namespace PS4Manager.App
             find.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) { FindNext(); e.SuppressKeyPress = true; } };
 
             var workspace = BuildReferenceWorkspace();
+            var projectBar = BuildProjectBar();
             var footer = BuildReferenceFooter();
-            var top = new TableLayoutPanel { Dock = DockStyle.Top, Height = 84, ColumnCount = 1, RowCount = 2, BackColor = StudioColors.Sidebar, Padding = new Padding(0) };
-            top.RowStyles.Add(new RowStyle(SizeType.Percent, 50)); top.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
-            top.Controls.Add(fileBar, 0, 0); top.Controls.Add(connectionBar, 0, 1);
+            var top = new TableLayoutPanel { Dock = DockStyle.Top, Height = 126, ColumnCount = 1, RowCount = 3, BackColor = StudioColors.Sidebar, Padding = new Padding(0) };
+            for (int row = 0; row < 3; row++) top.RowStyles.Add(new RowStyle(SizeType.Percent, 33.333F));
+            top.Controls.Add(fileBar, 0, 0); top.Controls.Add(connectionBar, 0, 1); top.Controls.Add(projectBar, 0, 2);
             Controls.Add(workspace); Controls.Add(footer); Controls.Add(top);
             ApplyReferenceChrome();
             status.Text = "Ready · offline";
@@ -125,10 +129,12 @@ namespace PS4Manager.App
         {
             bool editor = ActiveBuffer != null;
             foreach (string name in new[] { "Save", "Save as", "Check", "Next", "Find" }) commands[name].Enabled = editor;
+            commands["Save"].Enabled = commands["Save as"].Enabled = editor && !busy;
             foreach (string name in new[] { "Execute", "Upload", "Reload" }) commands[name].Enabled = connection.Connected && !busy && (name == "Reload" || editor);
             commands["Connect"].Enabled = !busy && !connection.Connected;
             commands["Disconnect"].Enabled = busy || connection.Connected;
             game.Enabled = host.Enabled = port.Enabled = token.Enabled = !busy && !connection.Connected;
+            UpdateProjectCommands();
         }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {

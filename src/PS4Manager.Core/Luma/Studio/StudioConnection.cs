@@ -94,13 +94,16 @@ namespace PS4Manager.Core.Luma.Studio
         }
         public Task<string> ReloadAsync(CancellationToken ct) => RunAsync((c, t) => c.ReloadAsync(t), ct);
         public Task<string> PollAsync(CancellationToken ct) => RunAsync((c, t) => c.PingAsync(t), ct);
+        internal Task<string[]> ListProjectAsync(string directory, long generation, CancellationToken ct) => RunAsync((c, t) => c.ListScriptDirectoryAsync(directory, t), ct, generation);
+        internal Task<byte[]> ReadProjectAsync(string path, long generation, CancellationToken ct) => RunAsync((c, t) => c.ReadProjectScriptAsync(path, t), ct, generation);
+        internal Task<string> PutProjectAsync(string path, byte[] bytes, long generation, CancellationToken ct) => RunAsync((c, t) => c.UploadProjectScriptAsync(path, bytes, t), ct, generation);
 
         private void Validate(string source)
         {
             var result = checker.Check(source ?? "", "console");
             if (!result.Success) throw new LumaException("Syntax check failed: " + result.Diagnostics[0].Message);
         }
-        private async Task<string> RunAsync(Func<LumaClient, CancellationToken, Task<string>> action, CancellationToken ct, long? generation = null)
+        private async Task<T> RunAsync<T>(Func<LumaClient, CancellationToken, Task<T>> action, CancellationToken ct, long? generation = null)
         {
             Session session;
             lock (sync) {

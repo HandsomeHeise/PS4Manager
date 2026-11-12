@@ -20,9 +20,14 @@ namespace PS4Manager.Core.Luma.Studio
         private static readonly Lazy<LuaApiCatalog> Gta = new Lazy<LuaApiCatalog>(() => Load("gta5"));
         private static readonly Lazy<LuaApiCatalog> Rdr = new Lazy<LuaApiCatalog>(() => Load("rdr2"));
         private readonly Dictionary<string, LuaApiSymbol> symbols;
-        private LuaApiCatalog(Dictionary<string, LuaApiSymbol> symbols) { this.symbols = symbols; }
+        private readonly Dictionary<string, LuaApiSymbol> caseInsensitive;
+        private LuaApiCatalog(Dictionary<string, LuaApiSymbol> symbols) {
+            this.symbols = symbols;
+            caseInsensitive = symbols.Values.GroupBy(s => s.Name, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+        }
         public static LuaApiCatalog ForProfile(string profile) => profile == "gta5" ? Gta.Value : profile == "rdr2" ? Rdr.Value : throw new ArgumentException("Unknown game profile.", nameof(profile));
         public LuaApiSymbol Find(string name) => name != null && symbols.TryGetValue(name, out var symbol) ? symbol : null;
+        internal LuaApiSymbol FindIgnoringCase(string name) => name != null && caseInsensitive.TryGetValue(name, out var symbol) ? symbol : null;
         public IReadOnlyList<LuaApiSymbol> Complete(string prefix, int limit = 150) => symbols.Values.Where(s => s.Name.StartsWith(prefix ?? "", StringComparison.OrdinalIgnoreCase)).OrderBy(s => s.Name, StringComparer.OrdinalIgnoreCase).Take(limit).ToArray();
         private static LuaApiCatalog Load(string profile) {
             var symbols = new Dictionary<string, LuaApiSymbol>(StringComparer.Ordinal);

@@ -19,7 +19,7 @@ namespace PS4Manager.App
         private readonly Action _saveSettings;
         private readonly LumaClient _client;
         private readonly ToolUiDispatcher _ui;
-        private readonly UiPanel _toolbar = new UiPanel { Dock = DockStyle.Top };
+        private readonly UiPanel _toolbar = new UiToolbar { Dock = DockStyle.Top };
         private readonly UiComboBox _game = new UiComboBox { Dock = DockStyle.Left };
         private readonly UiTextBox _host = new UiTextBox { PlaceholderText = "PS4 IP" };
         private readonly UiTextBox _port = new UiTextBox { Text = LumaEndpoint.GtaPort.ToString(CultureInfo.InvariantCulture) };

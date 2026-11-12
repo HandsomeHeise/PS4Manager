@@ -23,7 +23,7 @@ namespace PS4Manager.App
         private readonly ToolUiDispatcher _ui;
         private readonly ToolSessionBinding _binding;
         private readonly CancellationTokenSource _lifetime = new CancellationTokenSource();
-        private readonly UiPanel _toolbar = new UiPanel { Dock = DockStyle.Top };
+        private readonly UiPanel _toolbar = new UiToolbar { Dock = DockStyle.Top };
         private readonly UiButton _refresh = new UiButton { Text = "Refresh", Dock = DockStyle.Left, AutoSize = true };
         private readonly UiLabel _status = new UiLabel { Dock = DockStyle.Fill, AutoSize = false, Text = "Not connected." };
         private readonly UiTextBox _details = new UiTextBox { Dock = DockStyle.Fill, Multiline = true, ReadOnly = true };

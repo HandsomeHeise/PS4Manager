@@ -27,6 +27,11 @@ namespace PS4Manager.App
             editor.Markers[Marker.FolderOpen].Symbol = MarkerSymbol.BoxMinus;
             editor.WordChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.:";
             editor.AutoCIgnoreCase = true; editor.AutoCMaxHeight = 12;
+            editor.AutoCSelectionChange += (s, e) => {
+                var symbol = ApiCatalog.Find(e.Text);
+                if (symbol != null) help.Text = symbol.Signature + "\r\n\r\n" + symbol.Documentation;
+            };
+            ConfigureDiagnosticIndicators(editor);
             editor.Text = document.Source;
             var buffer = new Buffer { Document = document, Editor = editor, Page = new XtraTabPage { Text = document.Title, Tooltip = document.FilePath ?? "Unsaved buffer" } };
             buffer.Page.ImageOptions.Image = documentGlyph;
@@ -37,6 +42,8 @@ namespace PS4Manager.App
             StyleEditor(editor);
             editor.TextChanged += (s, e) => {
                 document.Source = editor.Text; buffer.Check = null; buffer.CheckedVersion = -1;
+                ClearDiagnosticIndicators(editor);
+                InvalidateProjectPreview();
                 buffer.Page.Text = document.Title + (document.IsDirty ? " *" : "");
                 if (buffer == ActiveBuffer) { ShowDiagnostics(); RefreshEditorChrome(); checkTimer.Stop(); checkTimer.Start(); }
             };
@@ -46,13 +53,13 @@ namespace PS4Manager.App
                     if (line > 0) { editor.Lines[line].Indentation = editor.Lines[line - 1].Indentation; editor.GotoPosition(editor.Lines[line].EndPosition); }
                 } else if (e.Char == '(') ShowCallTip(editor);
                 else if (char.IsLetter((char)e.Char) || e.Char == '_' || e.Char == '.') Complete(editor, false);
-                else if (e.Char == ')') editor.CallTipCancel();
+                else if (e.Char == ')' || e.Char == ',') ShowCallTip(editor);
             };
             editor.KeyDown += (s, e) => {
                 if (e.Control && e.KeyCode == Keys.Space) { Complete(editor, true); e.SuppressKeyPress = true; }
                 if (e.KeyCode == Keys.F1) { ShowSymbolHelp(editor); e.SuppressKeyPress = true; }
             };
-            editor.UpdateUI += (s, e) => { if (buffer == ActiveBuffer) { UpdateCaretStatus(); if (!busy) ShowSymbolHelp(editor, false); } };
+            editor.UpdateUI += (s, e) => { if (buffer == ActiveBuffer) { UpdateCaretStatus(); if (!busy) { ShowSymbolHelp(editor, false); UpdateSignature(buffer); } } };
             documents.TabPages.Add(buffer.Page); documents.SelectedTabPage = buffer.Page;
             buffer.Page.Text = document.Title + (document.IsDirty ? " *" : "");
             editor.Focus(); RefreshEditorChrome(); UpdateCommands();
@@ -83,23 +90,31 @@ namespace PS4Manager.App
         private void OnThemeChanged(object sender, EventArgs e) { foreach (var buffer in buffers.Values) StyleEditor(buffer.Editor); }
         private void RefreshProfile()
         {
+            foreach (var buffer in buffers.Values) { buffer.Check = null; buffer.CheckedVersion = -1; buffer.AssistanceProfile = null; ClearDiagnosticIndicators(buffer.Editor); buffer.Editor.AutoCCancel(); buffer.Editor.CallTipCancel(); }
             templates.Properties.Items.Clear(); templates.Properties.Items.AddRange(StudioTemplates.ForProfile(Profile).Cast<object>().ToArray()); templates.SelectedIndex = 0;
             help.Text = "LUMA STUDIO\r\n\r\n" + (Profile == "gta5" ? "GTA V · CUSA00411 · 1.57" : "Red Dead Redemption 2 · CUSA03041 · 1.32") +
                 "\r\n\r\nLua 5.4 · compile-only checks\r\n\r\nCtrl+Space: completion\r\nF1: API help\r\nF5: syntax check\r\nCtrl+F: find\r\nCtrl+W: close tab\r\n\r\nDefinitions are from Luma's runtime and native API. Syntax checks do not verify native argument types or availability in the running game.\r\n\r\nExecute runs this buffer once. Upload copies a Lua file only. Reload restarts the game's scripts separately.";
+            if (ActiveBuffer != null) { ShowDiagnostics(); checkTimer.Stop(); checkTimer.Start(); }
         }
         private void Complete(Scintilla editor, bool explicitRequest)
         {
-            int end = editor.CurrentPosition, start = editor.WordStartPosition(end, true);
-            string prefix = editor.GetTextRange(start, end - start);
-            if (!explicitRequest && prefix.Length < 2) return;
-            var matches = ApiCatalog.Complete(prefix);
-            if (matches.Count > 0) editor.AutoCShow(end - start, string.Join(" ", matches.Select(m => m.Name)));
+            int end = editor.CurrentPosition;
+            var completion = LuaLanguageService.Complete(editor.Text, end, ApiCatalog);
+            if (!explicitRequest && end - completion.Start < 2) return;
+            if (completion.Items.Count > 0) editor.AutoCShow(end - completion.Start, string.Join(" ", completion.Items.Select(m => m.Name)));
+            else editor.AutoCCancel();
         }
         private void ShowCallTip(Scintilla editor)
         {
-            int end = editor.CurrentPosition - 1, start = editor.WordStartPosition(end, true);
-            var symbol = ApiCatalog.Find(editor.GetTextRange(start, end - start));
-            if (symbol != null) { editor.CallTipShow(start, symbol.Signature); help.Text = symbol.Signature + "\r\n\r\n" + symbol.Documentation; }
+            var tip = LuaLanguageService.SignatureAt(editor.Text, editor.CurrentPosition, ApiCatalog);
+            if (tip == null) { editor.CallTipCancel(); return; }
+            editor.CallTipShow(tip.Start, tip.Symbol.Signature);
+            string signature = tip.Symbol.Signature; int first = signature.IndexOf('(') + 1;
+            var parameters = signature.Substring(first).TrimEnd(')').Split(',');
+            int parameter = Math.Min(tip.Parameter, parameters.Length - 1);
+            int highlight = first + parameters.Take(parameter).Sum(p => p.Length + 1);
+            editor.CallTipSetHlt(highlight, highlight + parameters[parameter].Length);
+            help.Text = signature + "\r\n\r\n" + tip.Symbol.Documentation;
         }
         private void ShowSymbolHelp(Scintilla editor, bool reportMissing = true)
         {
@@ -114,27 +129,32 @@ namespace PS4Manager.App
             if (buffer == null || closing) return;
             if (checking) { checkTimer.Start(); return; }
             string source = buffer.Document.Source, name = buffer.Document.FilePath ?? buffer.Document.Title;
+            string profile = Profile; var catalog = ApiCatalog;
             long version = buffer.Document.Version; checking = true;
             try {
-                var result = await Task.Run(() => checker.Check(source, name));
-                if (closing || !buffers.ContainsKey(buffer.Document.Id) || version != buffer.Document.Version) return;
+                var result = await Task.Run(() => {
+                    var syntax = checker.Check(source, name);
+                    return syntax.Success ? new LuaCheckResult(syntax.Available, syntax.Diagnostics.Concat(LuaLanguageService.Analyze(source, name, catalog))) : syntax;
+                });
+                if (closing || !buffers.ContainsKey(buffer.Document.Id) || version != buffer.Document.Version || profile != Profile) return;
                 buffer.Check = result; buffer.CheckedVersion = version;
                 StyleFunctionNames(buffer.Editor);
-                if (ActiveBuffer == buffer) { ShowDiagnostics(); status.Text = result.Success ? "Lua 5.4 · No syntax errors. This does not validate runtime behavior." : result.Available ? "Syntax errors found · double-click a diagnostic." : "Lua checker unavailable · Execute and Upload are blocked."; }
+                if (ActiveBuffer == buffer) { ShowDiagnostics(); status.Text = result.Success ? result.Diagnostics.Count == 0 ? "Lua 5.4 · No syntax errors. Runtime behavior is not verified." : "Syntax valid · " + result.Diagnostics.Count + " native hint(s). Warnings do not block execution/upload." : result.Available ? "Syntax errors found · double-click a diagnostic." : "Lua checker unavailable · Execute and Upload are blocked."; }
             } catch (Exception ex) { if (!closing) status.Text = "Check failed: " + ex.Message; }
             finally { checking = false; }
         }
         private void ShowDiagnostics()
         {
             diagnostics.Items.Clear();
-            foreach (var diagnostic in CurrentDiagnostics) diagnostics.Items.Add(diagnostic.FilePath + ":" + diagnostic.Line + "  " + diagnostic.Message);
+            foreach (var diagnostic in CurrentDiagnostics) diagnostics.Items.Add(diagnostic.Severity + "  " + diagnostic.FilePath + ":" + diagnostic.Line + "  " + diagnostic.Message);
+            if (ActiveBuffer != null) PaintDiagnosticIndicators(ActiveBuffer);
             UpdateLiveStatus();
         }
         internal void NavigateDiagnostic(int index)
         {
             if (index < 0 || index >= CurrentDiagnostics.Count || ActiveBuffer.CheckedVersion != ActiveDocument.Version) return;
             int line = Math.Min(ActiveEditor.Lines.Count - 1, CurrentDiagnostics[index].Line - 1);
-            ActiveEditor.GotoPosition(ActiveEditor.Lines[line].Position); ActiveEditor.ScrollCaret(); ActiveEditor.Focus();
+            ActiveEditor.GotoPosition(CurrentDiagnostics[index].Start >= 0 ? Math.Min(ActiveEditor.TextLength, CurrentDiagnostics[index].Start) : ActiveEditor.Lines[line].Position); ActiveEditor.ScrollCaret(); ActiveEditor.Focus();
         }
         private void FindNext()
         {

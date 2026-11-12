@@ -29,10 +29,16 @@ namespace PS4Manager.App
         }
         private void OpenProject()
         {
+            if (busy) return;
             using (var dialog = new FolderBrowserDialog { Description = "Open a local Lua project folder" }) {
                 if (dialog.ShowDialog(this) != DialogResult.OK) return;
                 try {
-                    projectRoot = Path.GetFullPath(dialog.SelectedPath);
+                    LoadProject(dialog.SelectedPath);
+                } catch (Exception ex) { status.Text = "Project failed: " + ex.Message; }
+            }
+        }
+        private void PopulateProjectTree()
+        {
                     projectTitle.Text = Path.GetFileName(projectRoot).ToUpperInvariant();
                     var files = StudioProject.Files(projectRoot); project.BeginUpdate();
                     try {
@@ -48,11 +54,10 @@ namespace PS4Manager.App
                         root.Expanded = true;
                     } finally { project.EndUpdate(); }
                     status.Text = files.Length + " Lua files · double-click to open. Scan capped at 1,000 files / 5,000 entries / 12 levels; links/build folders excluded.";
-                } catch (Exception ex) { status.Text = "Project failed: " + ex.Message; }
-            }
         }
         private bool SaveDocument(Buffer buffer, bool saveAs)
         {
+            if (busy) { status.Text = "Wait for the current Luma operation before saving files."; return false; }
             if (buffer == null) return false;
             string path = buffer.Document.FilePath;
             bool approved = false;
@@ -74,6 +79,7 @@ namespace PS4Manager.App
                 }
                 buffer.Page.Text = buffer.Document.Title; buffer.Page.Tooltip = buffer.Document.FilePath;
                 RefreshEditorChrome();
+                InvalidateProjectPreview();
                 status.Text = "Saved " + path; return true;
             } catch (Exception ex) { status.Text = "Save failed: " + ex.Message; return false; }
         }

@@ -1,5 +1,4 @@
 using System;
-using System.Drawing;
 using PS4Manager.Core.Luma.Studio;
 using ScintillaNET;
 
@@ -11,7 +10,7 @@ namespace PS4Manager.App
         {
             foreach (int id in new[] { 8, 9 }) {
                 editor.Indicators[id].Style = IndicatorStyle.Squiggle;
-                editor.Indicators[id].ForeColor = id == 8 ? Color.FromArgb(244, 135, 113) : StudioColors.Number;
+                editor.Indicators[id].ForeColor = id == 8 ? StudioColors.Error : StudioColors.Number;
             }
         }
         private static void ClearDiagnosticIndicators(Scintilla editor)

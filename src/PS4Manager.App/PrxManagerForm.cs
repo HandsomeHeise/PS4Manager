@@ -25,15 +25,16 @@ namespace PS4Manager.App
         private readonly Frame4PacketClient _packetClient;
         private readonly ToolUiDispatcher _ui;
         private readonly ToolSessionBinding _binding;
-        private readonly TableLayoutPanel _toolbar = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, ColumnCount = 2, RowCount = 1, Padding = new Padding(6) };
+        private readonly TableLayoutPanel _toolbar = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, ColumnCount = 3, RowCount = 1, Padding = new Padding(6, 4, 6, 4) };
         private readonly UiButton _refresh = new UiButton { Text = "Refresh Processes", AutoSize = true };
         private readonly UiLabel _status = new UiLabel { Text = "Not loaded.", Dock = DockStyle.Fill, AutoSize = false };
         private readonly UiSplit _split = new UiSplit
         {
             Dock = DockStyle.Fill,
             FixedPanel = FixedPanel.Panel1,
-            Panel1MinSize = 220,
-            Panel2MinSize = 420
+            SplitterDistance = 200,
+            Panel1MinSize = 156,
+            Panel2MinSize = 406
         };
         private readonly AppGrid _processes = new AppGrid { Dock = DockStyle.Fill };
         private readonly AppGrid _modules = new AppGrid { Dock = DockStyle.Fill };
@@ -91,20 +92,25 @@ namespace PS4Manager.App
 
             _processes.Columns.Add(new GridColumn("Pid", "PID") { Width = 70, ReadOnly = true });
             _processes.Columns.Add(new GridColumn("Name", "Process") { Width = 220, ReadOnly = true });
+            _processes.View.OptionsView.ColumnAutoWidth = true;
             _processes.DataSource = _processSource;
             _processes.Selection.Changed += (s, e) => UseSelectedProcess();
 
             _modules.Columns.Add(new GridColumn("Handle", "Handle") { Width = 90, ReadOnly = true });
             _modules.Columns.Add(new GridColumn("Name", "Name") { Width = 300, ReadOnly = true });
             _modules.Columns.Add(new GridColumn("Text", "Text") { Width = 190, ReadOnly = true });
+            _modules.View.OptionsView.ColumnAutoWidth = true;
             _modules.DataSource = _moduleSource;
             _modules.Selection.Changed += (s, e) => UseSelectedModule();
 
             _toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             _toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            _toolbar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             _toolbar.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             _toolbar.Controls.Add(_refresh, 0, 0);
             _toolbar.Controls.Add(_status, 1, 0);
+            _toolbar.Controls.Add(new UiLabel { Text = "Frame4 · " + _settings.Frame4.HttpPort, Margin = new Padding(10, 3, 3, 3) }, 2, 0);
+            UiLayout.SizeCommandColumns(_toolbar);
             _split.Panel1.Controls.Add(_processes);
             _split.Panel2.Controls.Add(RightPanel());
             Controls.Add(_split);
@@ -151,52 +157,61 @@ namespace PS4Manager.App
             var panel = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 4,
+                ColumnCount = 3,
                 RowCount = 6,
+                Padding = new Padding(8, 4, 8, 4),
                 BackColor = Color.Transparent
             };
             panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            for (int row = 0; row < 5; row++) panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             panel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            panel.Controls.Add(new UiLabel { Text = "Process", TextAlignment = ContentAlignment.MiddleLeft }, 0, 0);
-            panel.Controls.Add(_processName, 1, 0);
-            panel.Controls.Add(_list, 2, 0);
-            panel.Controls.Add(new UiLabel { Text = "Frame4 " + _settings.Frame4.HttpPort, TextAlignment = ContentAlignment.MiddleLeft }, 3, 0);
-            panel.Controls.Add(new UiLabel { Text = "PRX Path", TextAlignment = ContentAlignment.MiddleLeft }, 0, 1);
-            panel.Controls.Add(_remotePath, 1, 1);
-            panel.SetColumnSpan(_remotePath, 3);
-            panel.Controls.Add(new UiLabel { Text = "Local PRX", TextAlignment = ContentAlignment.MiddleLeft }, 0, 2);
-            panel.Controls.Add(_localPrx, 1, 2);
-            panel.SetColumnSpan(_localPrx, 2);
-            panel.Controls.Add(_browse, 3, 2);
-            panel.Controls.Add(_upload, 1, 3);
-            panel.Controls.Add(_deployLoad, 2, 3);
-            panel.Controls.Add(_load, 3, 3);
-            panel.Controls.Add(new UiLabel { Text = "Handle", TextAlignment = ContentAlignment.MiddleLeft }, 0, 4);
-            panel.Controls.Add(_handle, 1, 4);
-            panel.Controls.Add(_unload, 2, 4);
-            panel.Controls.Add(_modules, 0, 5);
-            panel.SetColumnSpan(_modules, 4);
-            UiLayout.SizeCommandColumns(panel);
-            var host = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
-            panel.Dock = DockStyle.None;
-            host.Controls.Add(panel);
-            host.Layout += (s, e) =>
+            AddInputRow(panel, 0, "Process", _processName, _list);
+            AddInputRow(panel, 1, "Console path", _remotePath);
+            AddInputRow(panel, 2, "Local file", _localPrx, _browse);
+
+            var actions = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = true, Margin = Padding.Empty };
+            foreach (var button in new[] { _upload, _deployLoad, _load })
             {
-                var rowHeight = panel.Controls.Cast<Control>().Where(c => c != _modules)
-                    .Max(c => c.GetPreferredSize(Size.Empty).Height + c.Margin.Vertical);
-                panel.Size = new Size(Math.Max(host.ClientSize.Width, (int)Math.Ceiling(DpiScale.Scale(580, DeviceDpi) * Font.Size / 10)),
-                    Math.Max(host.ClientSize.Height, rowHeight * 5 + 100));
+                button.Margin = new Padding(3, 2, 3, 2);
+                actions.Controls.Add(button);
+            }
+            panel.Controls.Add(actions, 0, 3);
+            panel.SetColumnSpan(actions, 3);
+            AddInputRow(panel, 4, "Handle", _handle, _unload);
+            panel.Controls.Add(_modules, 0, 5);
+            panel.SetColumnSpan(_modules, 3);
+            UiLayout.SizeCommandColumns(panel);
+            // Measure the action flow at the actual viewport width, not its
+            // unwrapped preferred width. The module grid gets the space left.
+            panel.Layout += (s, e) =>
+            {
+                int width = panel.ClientSize.Width - panel.Padding.Horizontal;
+                if (width <= 0) return;
+                var row = panel.RowStyles[3];
+                row.SizeType = SizeType.Absolute;
+                int height = actions.GetPreferredSize(new Size(width, 0)).Height;
+                if (row.Height != height) row.Height = height;
             };
-            return host;
+            return panel;
+        }
+
+        private static void AddInputRow(TableLayoutPanel panel, int row, string caption, UiTextBox editor, UiButton action = null)
+        {
+            var margin = new Padding(3, 2, 3, 2);
+            panel.Controls.Add(new UiLabel { Text = caption, Margin = margin }, 0, row);
+            editor.Dock = DockStyle.Fill;
+            editor.Margin = margin;
+            panel.Controls.Add(editor, 1, row);
+            if (action == null) panel.SetColumnSpan(editor, 2);
+            else
+            {
+                action.Dock = DockStyle.Fill;
+                action.Margin = margin;
+                panel.Controls.Add(action, 2, row);
+            }
         }
 
         private void BrowseLocalPrx()

@@ -37,16 +37,16 @@ namespace PS4Manager.Core.Tests.Presentation
         }
 
         [Fact]
-        public void Reference_palette_styles_the_real_Lua_editor_without_changing_the_global_theme()
+        public void Dark_palette_styles_the_real_Lua_editor_without_changing_the_global_theme()
         {
             StaTest.Run(() => {
                 string original = AppTheme.Current;
                 try {
-                    AppTheme.Current = AppTheme.Light;
+                    AppTheme.Current = AppTheme.Dark;
                     using (var form = new LumaStudioForm(new ManagerSettings(), () => { })) {
                         form.Show(); Application.DoEvents();
-                        Assert.Equal(AppTheme.Light, AppTheme.Current);
-                        Assert.Equal(Color.FromArgb(24, 27, 33), form.ActiveEditor.Styles[ScintillaNET.Style.Default].BackColor);
+                        Assert.Equal(AppTheme.Dark, AppTheme.Current);
+                        Assert.Equal(AppTheme.Surface, form.ActiveEditor.Styles[ScintillaNET.Style.Default].BackColor);
                         Assert.Equal(Color.FromArgb(199, 146, 234), form.ActiveEditor.Styles[ScintillaNET.Style.Lua.Word].ForeColor);
                         Assert.Equal(Color.FromArgb(247, 198, 108), form.ActiveEditor.Styles[ScintillaNET.Style.Lua.Number].ForeColor);
                         form.DiscardAllForTest();

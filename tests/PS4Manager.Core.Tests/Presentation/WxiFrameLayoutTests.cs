@@ -15,28 +15,91 @@ namespace PS4Manager.Core.Tests.Presentation
     public sealed class WxiFrameLayoutTests
     {
         [Theory]
-        [InlineData(10f, false)]
-        [InlineData(14f, true)]
-        public void Prx_toolbar_and_actions_fit_their_text_and_path_uses_available_width(float points, bool minimum)
+        [InlineData(10f, AppTheme.Light)]
+        [InlineData(10f, AppTheme.Dark)]
+        [InlineData(14f, AppTheme.Light)]
+        [InlineData(14f, AppTheme.Dark)]
+        public void Prx_actions_paths_and_modules_stay_visible_through_resize(float points, string theme)
+        {
+            StaTest.Run(() => {
+                var previousTheme = AppTheme.Current;
+                try {
+                    AppTheme.Current = theme;
+                    using (var form = new PrxManagerForm(new ManagerSettings { Ip = "" }, null))
+                    using (var font = new Font("Segoe UI", points)) {
+                        SetFont(form, font);
+                        form.Show();
+                        Application.DoEvents();
+                        var normalSize = form.Size;
+                        foreach (var size in new[] { normalSize, form.MinimumSize, normalSize }) {
+                            form.Size = size;
+                            Application.DoEvents();
+                            AssertPrxLayout(form);
+                        }
+                    }
+                } finally {
+                    AppTheme.Current = previousTheme;
+                }
+            });
+        }
+
+        [Fact]
+        public void Prx_file_actions_wrap_at_narrow_width_and_rejoin_when_widened()
         {
             StaTest.Run(() => {
                 using (var form = new PrxManagerForm(new ManagerSettings { Ip = "" }, null))
-                using (var font = new Font("Segoe UI", points)) {
+                using (var font = new Font("Segoe UI", 20f)) {
                     SetFont(form, font);
                     form.Show();
-                    if (minimum) form.Size = form.MinimumSize;
+                    var upload = Field<UiButton>(form, "_upload");
+                    var load = Field<UiButton>(form, "_load");
+                    form.Size = new Size(640, 480);
                     Application.DoEvents();
-                    var toolbar = Field<Control>(form, "_toolbar");
-                    var refresh = Field<UiButton>(form, "_refresh");
-                    Assert.True(toolbar.Height < refresh.GetPreferredSize(Size.Empty).Height + 32,
-                        "PRX toolbar must follow the action height instead of the default 100px panel height.");
-                    foreach (var name in new[] { "_list", "_browse", "_upload", "_deployLoad", "_load", "_unload" })
-                        AssertFits(Field<UiButton>(form, name));
-                    AssertSpansCell(Field<UiTextBox>(form, "_remotePath"));
-                    AssertSpansCell(Field<UiTextBox>(form, "_localPrx"));
-                    foreach (var label in Descendants(form).OfType<UiLabel>().Where(l => l.AutoSize && l.Parent is TableLayoutPanel)) AssertLabelFitsCell(label);
+                    Assert.True(load.Top > upload.Top, "File actions should wrap instead of running beyond the pane.");
+                    AssertPrxLayout(form);
+                    form.Width = 1000;
+                    Application.DoEvents();
+                    Assert.Equal(upload.Top, load.Top);
+                    AssertPrxLayout(form);
                 }
             });
+        }
+
+        private static void AssertPrxLayout(PrxManagerForm form)
+        {
+            var toolbar = Field<Control>(form, "_toolbar");
+            var refresh = Field<UiButton>(form, "_refresh");
+            Assert.True(toolbar.Height < refresh.GetPreferredSize(Size.Empty).Height + 32,
+                "PRX toolbar must follow the action height instead of the default 100px panel height.");
+
+            foreach (var name in new[] { "_refresh", "_list", "_browse", "_upload", "_deployLoad", "_load", "_unload" }) {
+                var button = Field<UiButton>(form, name);
+                AssertFits(button);
+                AssertFullyVisible(button, button.Text);
+            }
+
+            foreach (var name in new[] { "_remotePath", "_localPrx" }) {
+                var path = Field<UiTextBox>(form, name);
+                AssertSpansCell(path);
+                AssertFullyVisible(path, path.PlaceholderText);
+            }
+
+            var modules = Field<AppGrid>(form, "_modules");
+            Assert.True(modules.ClientSize.Height >= DpiScale.Scale(48, form.DeviceDpi),
+                "The module grid must have room for its header and a row.");
+            AssertFullyVisible(modules, "Module grid");
+            foreach (var label in Descendants(form).OfType<UiLabel>().Where(l => l.AutoSize && l.Parent is TableLayoutPanel)) AssertLabelFitsCell(label);
+        }
+
+        private static void AssertFullyVisible(Control control, string name)
+        {
+            Assert.True(control.Visible, name + " is hidden.");
+            var bounds = control.Parent.RectangleToScreen(control.Bounds);
+            for (var parent = control.Parent; parent != null; parent = parent.Parent) {
+                var viewport = parent.RectangleToScreen(parent.ClientRectangle);
+                Assert.True(viewport.Contains(bounds),
+                    name + " is clipped by " + parent.GetType().Name + ": " + bounds + " exceeds " + viewport);
+            }
         }
 
         [Theory]

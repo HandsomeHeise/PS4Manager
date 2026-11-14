@@ -64,7 +64,7 @@ namespace PS4Manager.Gallery.App
             _playPause.TextChanged += (s, e) => LayoutBar();
             _tick.Tick += OnTick;
 
-            _media.MediaOpened += (s, e) => LayoutBar();
+            _media.MediaOpened += (s, e) => { UpdateDisplay(); LayoutBar(); Opened?.Invoke(this, EventArgs.Empty); };
             _media.MediaEnded += (s, e) =>
             {
                 // Am Ende stehen bleiben statt still weiterzulaufen: Pause plus
@@ -88,6 +88,17 @@ namespace PS4Manager.Gallery.App
 
         /// <summary>Klartext für den Fenstertitel — kein Dialog, kein Absturz.</summary>
         public event EventHandler<string> Failed;
+        public event EventHandler Opened;
+        public TimeSpan Position => _media.Position;
+        public TimeSpan Duration => _media.Source != null && _media.NaturalDuration.HasTimeSpan
+            ? _media.NaturalDuration.TimeSpan : TimeSpan.Zero;
+
+        public void Pause()
+        {
+            if (_media.Source == null || !_playing) return;
+            _media.Pause();
+            SetPlaying(false);
+        }
 
         public void Play(string localFile)
         {

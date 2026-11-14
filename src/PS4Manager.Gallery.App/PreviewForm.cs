@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using PS4Manager.Core.Media;
+using PS4Manager.Gallery.Core.Clips;
 using PS4Manager.Gallery.Core.Ps4;
 
 namespace PS4Manager.Gallery.App
@@ -29,6 +30,14 @@ namespace PS4Manager.Gallery.App
         private readonly string _gameName;
         private readonly PreviewCanvas _canvas = new PreviewCanvas { Dock = DockStyle.Fill };
         private readonly VideoView _video = new VideoView { Dock = DockStyle.Fill, Visible = false };
+        private readonly FlowLayoutPanel _clipBar = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(8), Visible = false };
+        private readonly UiButton _markStart = new UiButton { Text = "Start setzen", AutoSize = true };
+        private readonly UiButton _markEnd = new UiButton { Text = "Ende setzen", AutoSize = true };
+        private readonly UiButton _previewClip = new UiButton { Text = "Ausschnitt ansehen", AutoSize = true };
+        private readonly UiLabel _clipStatus = new UiLabel { Margin = new Padding(8, 10, 3, 3) };
+        private readonly ClipMarks _marks = new ClipMarks();
+        private string _clipSource;
+        private string _encoder;
         private int _index;
 
         // Zählt Navigationen; veraltete Ladevorgänge erkennen sich daran
@@ -64,12 +73,18 @@ namespace PS4Manager.Gallery.App
 
             Controls.Add(_canvas);
             Controls.Add(_video);
+            Controls.Add(_clipBar);
+            _clipBar.Controls.AddRange(new Control[] { _markStart, _markEnd, _previewClip, _clipStatus });
+            _markStart.Click += (s, e) => SetMark(true);
+            _markEnd.Click += (s, e) => SetMark(false);
+            _previewClip.Click += (s, e) => PreviewClip();
+            _video.Opened += (s, e) => TryApply(_videoGeneration, RefreshClipBar);
             _video.Failed += (s, message) =>
             {
                 // Wie jeder andere Text-Schreibzugriff in diesem Fenster gegen
                 // die Generation absichern: MediaFailed kann eintreffen,
                 // nachdem der Nutzer längst weitergeblättert hat.
-                TryApply(_videoGeneration, () => Text = "Fehler: " + message);
+                TryApply(_videoGeneration, () => { ResetClip(); Text = "Fehler: " + message; });
             };
 
             KeyDown += OnPreviewKeyDown;
@@ -102,6 +117,13 @@ namespace PS4Manager.Gallery.App
                         e.Handled = true;
                         return;
                     }
+                    if (e.Control && (e.KeyCode == Keys.Left || e.KeyCode == Keys.Right))
+                    {
+                        _video.Pause();
+                        _video.Nudge(TimeSpan.FromMilliseconds(e.KeyCode == Keys.Left ? -100 : 100));
+                        e.SuppressKeyPress = true;
+                        return;
+                    }
                 }
 
                 if (e.KeyCode == Keys.Left && _index > 0) { _index--; showCurrent = true; }
@@ -124,6 +146,7 @@ namespace PS4Manager.Gallery.App
             {
                 if (IsDisposed) return;
                 gen = ++_generation;
+                ResetClip();
                 _video.Stop();             // Ton des vorigen Clips beenden
                 item = _items[_index];
                 title = _gameName + " — " + item.Timestamp.ToString("dd.MM.yyyy HH:mm") +
@@ -205,13 +228,72 @@ namespace PS4Manager.Gallery.App
                     if (_video.IsDisposed) return;
                     Text = title;
                     _videoGeneration = gen;
+                    _clipSource = file;
                     _video.Play(file);
+                    RefreshClipBar();
                 });
             }
             catch (Exception ex)
             {
-                TryApply(gen, () => Text = "Fehler: " + Root(ex).Message);
+                TryApply(gen, () => { ResetClip(); Text = "Fehler: " + Root(ex).Message; });
             }
+        }
+
+        private void ResetClip()
+        {
+            _clipSource = null;
+            _marks.Reset();
+            RefreshClipBar();
+        }
+
+        private void RefreshClipBar()
+        {
+            _clipBar.Visible = _clipSource != null;
+            _markStart.Enabled = _markEnd.Enabled = _clipSource != null && _video.Duration > TimeSpan.Zero;
+            _previewClip.Enabled = _markStart.Enabled && _marks.TryGetRange(_video.Duration, out _);
+            _clipStatus.Text = "Start: " + FormatMark(_marks.Start) + "   Ende: " + FormatMark(_marks.End)
+                + (_marks.Start.HasValue && _marks.End.HasValue && !_previewClip.Enabled ? "   Ende muss nach Start liegen." : "");
+        }
+
+        private static string FormatMark(TimeSpan? time) => time?.ToString(@"hh\:mm\:ss\.fff") ?? "—";
+
+        private void SetMark(bool start)
+        {
+            TryApply(_videoGeneration, () =>
+            {
+                if (_clipSource == null || _video.Duration <= TimeSpan.Zero) return;
+                _video.Pause();
+                var position = _video.Position;
+                if (position < TimeSpan.Zero) position = TimeSpan.Zero;
+                if (position > _video.Duration) position = _video.Duration;
+                if (start) _marks.SetStart(position); else _marks.SetEnd(position);
+                RefreshClipBar();
+            });
+        }
+
+        private void PreviewClip()
+        {
+            var generation = _generation;
+            var source = _clipSource;
+            if (!_session.IsActive || source == null || !_marks.TryGetRange(_video.Duration, out var range)) return;
+            _video.Pause();
+            if (!File.Exists(_encoder)) _encoder = ClipExport.FindEncoder();
+            if (_encoder == null)
+            {
+                using (var choose = new OpenFileDialog { Title = "Für den Export eine FFmpeg-Version mit libx264 auswählen", Filter = "FFmpeg (ffmpeg.exe)|ffmpeg.exe", FileName = "ffmpeg.exe", RestoreDirectory = true })
+                {
+                    if (choose.ShowDialog(this) != DialogResult.OK) return;
+                    if (!string.Equals(Path.GetFileName(choose.FileName), "ffmpeg.exe", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _clipStatus.Text = "Bitte ffmpeg.exe auswählen.";
+                        return;
+                    }
+                    _encoder = choose.FileName;
+                }
+            }
+            if (IsDisposed || !_session.IsActive || generation != _generation || source != _clipSource) return;
+            using (var dialog = new ClipExportPreviewDialog(_encoder, source, range, _session.Session.CancellationToken))
+                dialog.ShowDialog(this);
         }
 
         private bool TryApply(int generation, Action update)

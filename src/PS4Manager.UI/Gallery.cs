@@ -87,6 +87,7 @@ namespace PS4Manager.UI
         }
         public Collection<GalleryItemGroup> Groups { get; }
         public Size ImageSize { get => native.ImageSize; set => native.ImageSize = value; }
+        public DevExpress.Utils.Drawing.ImageLayoutMode ItemImageLayout { get => native.ItemImageLayout; set => native.ItemImageLayout = value; }
         public ItemCheckMode ItemCheckMode { get; set; }
         public bool ShowGroupCaption { get => native.ShowGroupCaption; set => native.ShowGroupCaption = value; }
         public IEnumerable<GalleryItem> CheckedItems => Groups.SelectMany(g => g.Items).Where(i => i.Checked);

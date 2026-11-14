@@ -36,10 +36,6 @@ namespace PS4Manager.App
             AddButton(actions, "Select changes", () => SetSyncSelection(true)); AddButton(actions, "Clear selection", () => SetSyncSelection(false));
             syncPage.Controls.Add(Inset(syncFiles)); syncPage.Controls.Add(syncSummary); syncPage.Controls.Add(actions); tools.TabPages.Add(syncPage);
             syncFiles.ItemCheck += (s, e) => UpdateProjectCommands();
-            recentProjects.LookAndFeel.UseDefaultLookAndFeel = false; recentProjects.LookAndFeel.SetSkinStyle(AppTheme.SkinName);
-            SetColors(recentProjects.Properties.Appearance, StudioColors.Editor, StudioColors.Text);
-            syncFiles.LookAndFeel.UseDefaultLookAndFeel = false; syncFiles.LookAndFeel.SetSkinStyle(AppTheme.SkinName);
-            SetColors(syncFiles.Appearance, StudioColors.Editor, StudioColors.Text);
             RefreshRecentProjects(); return bar;
         }
         private void NewProject()

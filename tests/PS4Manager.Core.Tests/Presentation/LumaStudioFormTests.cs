@@ -25,7 +25,7 @@ namespace PS4Manager.Core.Tests.Presentation
                 Assert.True(form.ActiveEditor.Width > 600, "Editor should receive most of the horizontal space.");
                 Assert.False(form.StudioConnected);
                 Assert.Equal("lua", form.ActiveEditor.LexerName);
-                Assert.Equal(System.Drawing.Color.FromArgb(24, 27, 33), form.ActiveEditor.Styles[ScintillaNET.Style.LineNumber].BackColor);
+                Assert.Equal(AppTheme.Surface, form.ActiveEditor.Styles[ScintillaNET.Style.LineNumber].BackColor);
                 Assert.Contains("Check", form.CommandNames);
                 Assert.Contains("Execute", form.CommandNames);
                 Assert.Contains("Upload", form.CommandNames);

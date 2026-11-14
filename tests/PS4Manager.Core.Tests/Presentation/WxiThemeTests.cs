@@ -1,7 +1,11 @@
 using System;
 using System.Drawing;
 using System.Linq;
+using System.Windows.Forms;
 using DevExpress.LookAndFeel;
+using DevExpress.XtraEditors;
+using DevExpress.XtraTab;
+using DevExpress.XtraTreeList;
 using PS4Manager.App;
 using PS4Manager.Core.Config;
 using PS4Manager.Core.Tests.TestSupport;
@@ -58,11 +62,23 @@ namespace PS4Manager.Core.Tests.Presentation
                         Assert.Equal("WXI", form.LookAndFeel.ActiveSkinName);
                         Assert.Equal(palette, UserLookAndFeel.Default.ActiveSvgPaletteName);
                         Assert.Equal(light, AppTheme.IsLight);
-                        Assert.Equal(Color.FromArgb(24, 27, 33), form.ActiveEditor.Styles[ScintillaNET.Style.Default].BackColor);
+                        form.ActiveEditor.Text = "local value = 42\nreturn value";
+                        form.ActiveEditor.GotoPosition(5);
+                        var document = form.ActiveDocument;
+                        var editor = form.ActiveEditor;
+                        AssertStudioTheme(form, light, palette);
+                        CaptureStudio(form, light ? "light" : "dark");
                         AppTheme.Current = light ? AppTheme.Dark : AppTheme.Light;
+                        Application.DoEvents();
                         Assert.Equal(!light, AppTheme.IsLight);
                         Assert.Equal("WXI", UserLookAndFeel.Default.SkinName);
                         Assert.Equal(light ? "Darkness" : "", UserLookAndFeel.Default.ActiveSvgPaletteName);
+                        AssertStudioTheme(form, !light, light ? "Darkness" : "");
+                        Assert.Same(document, form.ActiveDocument);
+                        Assert.Same(editor, form.ActiveEditor);
+                        Assert.Equal("local value = 42\nreturn value", editor.Text);
+                        Assert.Equal(5, editor.CurrentPosition);
+                        Assert.True(document.IsDirty);
                         form.DiscardAllForTest();
                     }
                     AppTheme.Current = light ? AppTheme.Dark : AppTheme.Light;
@@ -71,6 +87,38 @@ namespace PS4Manager.Core.Tests.Presentation
                     Assert.Equal(light ? "Darkness" : "", UserLookAndFeel.Default.ActiveSvgPaletteName);
                 } finally { AppTheme.Current = previous; }
             });
+        }
+
+        private static void AssertStudioTheme(LumaStudioForm form, bool light, string palette)
+        {
+            var native = Descendants(form).Where(control => control is BaseEdit || control is UiButton || control is UiSplit || control is XtraTabControl || control is TreeList || control is ListBoxControl).ToArray();
+            Assert.NotEmpty(native);
+            foreach (var control in native.Append(form)) {
+                var lookAndFeel = (UserLookAndFeel)control.GetType().GetProperty("LookAndFeel").GetValue(control);
+                Assert.True(lookAndFeel.UseDefaultLookAndFeel, control.GetType().Name + " bypasses the shared WXI palette.");
+                Assert.Equal("WXI", lookAndFeel.ActiveSkinName);
+                Assert.Equal(palette, lookAndFeel.ActiveSvgPaletteName);
+            }
+            var background = form.ActiveEditor.Styles[ScintillaNET.Style.Default].BackColor;
+            Assert.Equal(AppTheme.Surface, background);
+            Assert.Equal(background, form.ActiveEditor.Styles[ScintillaNET.Style.LineNumber].BackColor);
+            Assert.Equal(background, form.ActiveEditor.Styles[ScintillaNET.Style.Lua.Word].BackColor);
+            var selection = form.ActiveEditor.SelectionBackColor;
+            Assert.Equal(selection.R, selection.G);
+            Assert.Equal(selection.G, selection.B);
+            Assert.InRange(Math.Abs(selection.R - background.R), 20, 60);
+            foreach (var bar in Descendants(form).OfType<FlowLayoutPanel>()) Assert.Equal(AppTheme.Background, bar.BackColor);
+        }
+
+        private static void CaptureStudio(LumaStudioForm form, string mode)
+        {
+            var root = Environment.GetEnvironmentVariable("PS4MANAGER_VISUAL_DIR");
+            if (string.IsNullOrEmpty(root)) return;
+            System.IO.Directory.CreateDirectory(root);
+            using (var bitmap = new Bitmap(form.Width, form.Height)) {
+                form.DrawToBitmap(bitmap, new Rectangle(Point.Empty, bitmap.Size));
+                bitmap.Save(System.IO.Path.Combine(root, "luma-" + mode + ".png"));
+            }
         }
     }
 }

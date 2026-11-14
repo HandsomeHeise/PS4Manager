@@ -115,14 +115,14 @@ namespace PS4Manager.App
             var workspace = BuildReferenceWorkspace();
             var projectBar = BuildProjectBar();
             var footer = BuildReferenceFooter();
-            var top = new TableLayoutPanel { Dock = DockStyle.Top, Height = 126, ColumnCount = 1, RowCount = 3, BackColor = StudioColors.Sidebar, Padding = new Padding(0) };
-            for (int row = 0; row < 3; row++) top.RowStyles.Add(new RowStyle(SizeType.Percent, 33.333F));
+            var top = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, ColumnCount = 1, RowCount = 3, Padding = new Padding(4) };
+            for (int row = 0; row < 3; row++) top.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             top.Controls.Add(fileBar, 0, 0); top.Controls.Add(connectionBar, 0, 1); top.Controls.Add(projectBar, 0, 2);
             Controls.Add(workspace); Controls.Add(footer); Controls.Add(top);
-            ApplyReferenceChrome();
+            ApplyStudioTheme();
             status.Text = "Ready · offline";
         }
-        private static FlowLayoutPanel Bar() => new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false, AutoScroll = true, Margin = Padding.Empty, Padding = new Padding(5, 1, 5, 0), BackColor = StudioColors.Sidebar };
+        private static FlowLayoutPanel Bar() => new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = true, Margin = Padding.Empty, Padding = new Padding(4, 1, 4, 1) };
         private void AddButton(Control bar, string name, Action action)
         { var button = new StudioButton { Text = name, AutoSize = true, Height = 30, AccessibleName = name }; button.Click += (s, e) => { if (!closing) action(); }; commands.Add(name, button); bar.Controls.Add(button); }
         private void UpdateCommands()

@@ -91,6 +91,7 @@ namespace PS4Manager.Gallery.App
             toolbar.Controls.Add(_refresh);
 
             _gallery.Gallery.ImageSize = new Size(192, 108);
+            _gallery.Gallery.ItemImageLayout = DevExpress.Utils.Drawing.ImageLayoutMode.ZoomInside;
             _gallery.Gallery.ItemCheckMode = ItemCheckMode.Multiple;
 
             _gallery.Gallery.ItemImageNeeded += (s, e) =>

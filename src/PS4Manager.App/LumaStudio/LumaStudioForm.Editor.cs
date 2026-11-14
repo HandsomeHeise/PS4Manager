@@ -22,7 +22,6 @@ namespace PS4Manager.App
             editor.Margins[1].Type = MarginType.Symbol; editor.Margins[1].Mask = Marker.MaskFolders;
             editor.Margins[1].Width = 18; editor.Margins[1].Sensitive = true;
             editor.AutomaticFold = AutomaticFold.Show | AutomaticFold.Click | AutomaticFold.Change;
-            for (int i = Marker.FolderEnd; i <= Marker.FolderOpen; i++) { editor.Markers[i].SetBackColor(StudioColors.Muted); editor.Markers[i].SetForeColor(StudioColors.Editor); }
             editor.Markers[Marker.Folder].Symbol = MarkerSymbol.BoxPlus;
             editor.Markers[Marker.FolderOpen].Symbol = MarkerSymbol.BoxMinus;
             editor.WordChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.:";
@@ -31,13 +30,10 @@ namespace PS4Manager.App
                 var symbol = ApiCatalog.Find(e.Text);
                 if (symbol != null) help.Text = symbol.Signature + "\r\n\r\n" + symbol.Documentation;
             };
-            ConfigureDiagnosticIndicators(editor);
             editor.Text = document.Source;
             var buffer = new Buffer { Document = document, Editor = editor, Page = new XtraTabPage { Text = document.Title, Tooltip = document.FilePath ?? "Unsaved buffer" } };
             buffer.Page.ImageOptions.Image = documentGlyph;
             buffer.Breadcrumb = new UiLabel { Text = document.FilePath ?? document.Title + " · unsaved", Dock = DockStyle.Top, AutoSize = false, Height = 36, Padding = new Padding(20, 0, 0, 0) };
-            SetColors(buffer.Breadcrumb.Appearance, StudioColors.Editor, StudioColors.Muted);
-            SetColors(buffer.Page.Appearance.PageClient, StudioColors.Editor, StudioColors.Text);
             buffer.Page.Tag = buffer; buffer.Page.Controls.Add(editor); buffer.Page.Controls.Add(buffer.Breadcrumb); buffers.Add(document.Id, buffer);
             StyleEditor(editor);
             editor.TextChanged += (s, e) => {
@@ -69,16 +65,18 @@ namespace PS4Manager.App
             editor.Styles[Style.Default].Font = "Consolas"; editor.Styles[Style.Default].Size = 12;
             editor.Styles[Style.Default].BackColor = StudioColors.Editor; editor.Styles[Style.Default].ForeColor = StudioColors.Text;
             editor.StyleClearAll();
-            editor.Styles[Style.LineNumber].ForeColor = Color.FromArgb(94, 117, 145);
+            editor.Styles[Style.LineNumber].ForeColor = StudioColors.Muted;
             editor.Styles[Style.LineNumber].BackColor = StudioColors.Editor;
             editor.Styles[Style.Lua.Word].ForeColor = StudioColors.Keyword; editor.Styles[Style.Lua.Word].Bold = true;
             editor.Styles[Style.Lua.Word2].ForeColor = StudioColors.Accent;
-            foreach (int id in new[] { Style.Lua.String, Style.Lua.Character, Style.Lua.LiteralString }) editor.Styles[id].ForeColor = Color.FromArgb(195, 218, 157);
-            foreach (int id in new[] { Style.Lua.Comment, Style.Lua.CommentLine, Style.Lua.CommentDoc }) editor.Styles[id].ForeColor = Color.FromArgb(103, 151, 112);
+            foreach (int id in new[] { Style.Lua.String, Style.Lua.Character, Style.Lua.LiteralString }) editor.Styles[id].ForeColor = AppTheme.IsLight ? Color.FromArgb(32, 103, 50) : Color.FromArgb(195, 218, 157);
+            foreach (int id in new[] { Style.Lua.Comment, Style.Lua.CommentLine, Style.Lua.CommentDoc }) editor.Styles[id].ForeColor = AppTheme.IsLight ? Color.FromArgb(75, 101, 83) : Color.FromArgb(113, 159, 122);
             editor.Styles[Style.Lua.Number].ForeColor = StudioColors.Number;
             editor.CaretForeColor = StudioColors.Text;
-            editor.SelectionBackColor = Color.FromArgb(39, 65, 96);
+            editor.SelectionBackColor = AppTheme.IsLight ? Color.FromArgb(222, 222, 222) : Color.FromArgb(66, 66, 66);
             editor.SetFoldMarginColor(true, StudioColors.Editor); editor.SetFoldMarginHighlightColor(true, StudioColors.Editor);
+            for (int i = Marker.FolderEnd; i <= Marker.FolderOpen; i++) { editor.Markers[i].SetBackColor(StudioColors.Muted); editor.Markers[i].SetForeColor(StudioColors.Editor); }
+            ConfigureDiagnosticIndicators(editor);
             StyleFunctionNames(editor);
         }
         private static void StyleFunctionNames(Scintilla editor)
@@ -87,7 +85,7 @@ namespace PS4Manager.App
                 .Cast<System.Text.RegularExpressions.Match>().Take(256).Select(m => m.Groups[1].Value.Split('.', ':').Last());
             editor.SetKeywords(1, "print log pairs ipairs type tostring tonumber require assert error pcall " + string.Join(" ", functions));
         }
-        private void OnThemeChanged(object sender, EventArgs e) { foreach (var buffer in buffers.Values) StyleEditor(buffer.Editor); }
+        private void OnThemeChanged(object sender, EventArgs e) => ApplyStudioTheme();
         private void RefreshProfile()
         {
             foreach (var buffer in buffers.Values) { buffer.Check = null; buffer.CheckedVersion = -1; buffer.AssistanceProfile = null; ClearDiagnosticIndicators(buffer.Editor); buffer.Editor.AutoCCancel(); buffer.Editor.CallTipCancel(); }
